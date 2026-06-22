@@ -212,7 +212,7 @@ function openCardHtml(order) {
           ${(order.tracking || order.note) ? '<button class="more-btn" data-action="details" data-id="' + order.id + '" type="button">פרטים</button>' : ''}
         </div>
       </div>
-      <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע!!!</button>
+      <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע!</button>
     </article>
   `;
 }
@@ -240,7 +240,7 @@ function openDetails(id) {
   const tracking = order.tracking || '—';
   const note = order.note ? `<div class="details-note">${escapeHtml(order.note)}</div>` : '';
   const statusAction = order.status === 'open'
-    ? `<button class="dialog-action primary" data-action="arrive" data-id="${order.id}" type="button">הגיע!!!</button>`
+    ? `<button class="dialog-action primary" data-action="arrive" data-id="${order.id}" type="button">הגיע!</button>`
     : `<button class="dialog-action soft" data-action="restore" data-id="${order.id}" type="button">החזירי לבדרך</button>`;
   const copyButton = order.tracking
     ? `<button class="dialog-action" data-action="copy" data-id="${order.id}" type="button">העתקת מעקב</button>`
@@ -480,144 +480,3 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
-
-
-/* === v2.1 Backup / Restore tools === */
-(function setupBackupRestoreTools() {
-  const STORAGE_KEY_CANDIDATES = [
-    "eifoZeOrders",
-    "eifo-ze-orders",
-    "orders",
-    "whereisit-orders",
-    "shimiOrders"
-  ];
-
-  function findOrdersStorageKey() {
-    for (const key of STORAGE_KEY_CANDIDATES) {
-      const raw = localStorage.getItem(key);
-      if (!raw) continue;
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) return key;
-        if (parsed && Array.isArray(parsed.orders)) return key;
-      } catch (e) {}
-    }
-
-    // Fallback: find any localStorage item that looks like an orders array
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      const raw = localStorage.getItem(key);
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.some(item => item && (item.store || item.item || item.amount))) {
-          return key;
-        }
-        if (parsed && Array.isArray(parsed.orders)) return key;
-      } catch (e) {}
-    }
-
-    // Default used by the app if empty / fresh install
-    return "eifoZeOrders";
-  }
-
-  function getAllAppData() {
-    const storage = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      storage[key] = localStorage.getItem(key);
-    }
-
-    return {
-      app: "איפה זה?!",
-      version: "v2.1-backup",
-      exportedAt: new Date().toISOString(),
-      origin: location.origin,
-      href: location.href,
-      storageKey: findOrdersStorageKey(),
-      localStorage: storage
-    };
-  }
-
-  function downloadBackup() {
-    const data = getAllAppData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
-    const date = new Date().toISOString().slice(0, 10);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `eifo-ze-backup-${date}.json`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      URL.revokeObjectURL(a.href);
-      a.remove();
-    }, 1000);
-    alert("הגיבוי ירד לקובץ. עכשיו אפשר לנשום.");
-  }
-
-  function restoreBackupFromFile(file) {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const backup = JSON.parse(reader.result);
-        if (!backup || !backup.localStorage) {
-          alert("זה לא נראה כמו קובץ גיבוי תקין של איפה זה?!");
-          return;
-        }
-
-        Object.entries(backup.localStorage).forEach(([key, value]) => {
-          localStorage.setItem(key, value);
-        });
-
-        alert("שוחזר! האפליקציה תיטען מחדש עכשיו.");
-        location.reload();
-      } catch (e) {
-        alert("לא הצלחתי לקרוא את קובץ הגיבוי.");
-      }
-    };
-    reader.readAsText(file);
-  }
-
-  function makeButton(text, type) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = `backup-action backup-${type}`;
-    btn.textContent = text;
-    return btn;
-  }
-
-  function injectBackupUI() {
-    if (document.querySelector(".backup-panel")) return;
-
-    const panel = document.createElement("div");
-    panel.className = "backup-panel";
-
-    const title = document.createElement("div");
-    title.className = "backup-title";
-    title.textContent = "גיבוי ושחזור";
-
-    const exportBtn = makeButton("הורידי גיבוי", "export");
-    exportBtn.addEventListener("click", downloadBackup);
-
-    const importBtn = makeButton("שחזרי מגיבוי", "import");
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json,.json";
-    input.hidden = true;
-
-    importBtn.addEventListener("click", () => input.click());
-    input.addEventListener("change", () => {
-      if (input.files && input.files[0]) restoreBackupFromFile(input.files[0]);
-    });
-
-    panel.append(title, exportBtn, importBtn, input);
-
-    const main = document.querySelector("main") || document.querySelector(".app") || document.body;
-    main.appendChild(panel);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", injectBackupUI);
-  } else {
-    injectBackupUI();
-  }
-})();
