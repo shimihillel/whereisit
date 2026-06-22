@@ -3,30 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ff2da1" />
+  <meta name="theme-color" content="#fff8ef" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="איפה זה?!" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>איפה זה?!</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-  <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="style.css" />
+
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
   <div class="app-shell">
-    <header class="hero">
-      <div class="tape tape-top">האפליקציה שלא שופטת.</div>
-      <h1>איפה זה?!</h1>
-      <p class="tagline">רק מחכה איתך לחבילות.</p>
-      <div class="doodle doodle-heart">♡</div>
-      <div class="doodle doodle-q">?!</div>
+    <header class="top-header">
+      <div>
+        <p class="eyebrow">האפליקציה שלא שופטת</p>
+        <h1>איפה זה?!</h1>
+        <p class="tagline">רק מחכה איתך לחבילות.</p>
+      </div>
+      <div class="mini-mascot" aria-hidden="true">📦</div>
     </header>
 
     <main>
       <section id="screen-open" class="screen active" aria-label="הזמנות בדרך">
-        <div class="summary-card sticker-yellow">
+        <div class="summary-card">
           <p class="summary-line" id="openSummary">בדרך אלייך עכשיו: 0 חבילות · ₪0</p>
           <p class="mood-line" id="moodLine">אין כלום בדרך. חשוד מאוד.</p>
         </div>
@@ -38,14 +39,14 @@
           </label>
         </div>
 
-        <div id="openList" class="order-list"></div>
+        <div id="openList" class="order-list open-list"></div>
       </section>
 
       <section id="screen-form" class="screen" aria-label="הוספת הזמנה">
-        <div class="form-card paper-card">
+        <div class="form-card panel-card">
           <div class="form-head">
-            <button class="tiny-button" id="cancelEdit" type="button" hidden>ביטול עריכה</button>
             <h2 id="formTitle">הוספת הזמנה</h2>
+            <button class="tiny-button" id="cancelEdit" type="button" hidden>ביטול עריכה</button>
           </div>
 
           <form id="orderForm" autocomplete="off">
@@ -92,25 +93,25 @@
       </section>
 
       <section id="screen-done" class="screen" aria-label="היסטוריה">
-        <div class="history-head paper-card small-paper">
+        <div class="history-head panel-card">
           <h2>כבר אצלי</h2>
-          <p>מצאת משהו מהעבר?</p>
+          <p id="doneSummary">מצאת משהו מהעבר?</p>
           <label class="search-wrap">
             <span>🔎</span>
             <input id="doneSearch" type="search" placeholder="חפשי חנות, פריט או מספר הזמנה" autocomplete="off" />
           </label>
         </div>
 
-        <div id="doneList" class="order-list history-list"></div>
+        <div id="doneList" class="order-list history-grid"></div>
       </section>
     </main>
 
     <button id="addFab" class="fab" type="button">+ לא לשפוט</button>
 
     <nav class="bottom-nav" aria-label="ניווט">
-      <button class="nav-btn active" data-screen="open" type="button">בדרך</button>
-      <button class="nav-btn" data-screen="form" type="button">הוספה</button>
-      <button class="nav-btn" data-screen="done" type="button">כבר אצלי</button>
+      <button class="nav-btn active" data-screen="open" type="button"><span>📍</span>בדרך</button>
+      <button class="nav-btn nav-add" data-screen="form" type="button"><span>＋</span>הוספה</button>
+      <button class="nav-btn" data-screen="done" type="button"><span>✓</span>כבר אצלי</button>
     </nav>
   </div>
 
@@ -121,6 +122,13 @@
       <p></p>
     </div>
   </template>
+
+  <dialog id="detailsDialog" class="details-dialog">
+    <div class="dialog-card">
+      <button class="dialog-close" id="closeDetails" type="button" aria-label="סגירה">×</button>
+      <div id="detailsContent"></div>
+    </div>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

@@ -14,6 +14,7 @@ const categories = [
 ];
 
 let orders = loadOrders();
+let activeDetailsId = null;
 
 const els = {
   screens: {
@@ -28,6 +29,7 @@ const els = {
   openSearch: document.getElementById('openSearch'),
   doneSearch: document.getElementById('doneSearch'),
   openSummary: document.getElementById('openSummary'),
+  doneSummary: document.getElementById('doneSummary'),
   moodLine: document.getElementById('moodLine'),
   form: document.getElementById('orderForm'),
   formTitle: document.getElementById('formTitle'),
@@ -40,7 +42,10 @@ const els = {
   tracking: document.getElementById('tracking'),
   note: document.getElementById('note'),
   categoryChips: document.getElementById('categoryChips'),
-  emptyTemplate: document.getElementById('emptyTemplate')
+  emptyTemplate: document.getElementById('emptyTemplate'),
+  detailsDialog: document.getElementById('detailsDialog'),
+  detailsContent: document.getElementById('detailsContent'),
+  closeDetails: document.getElementById('closeDetails')
 };
 
 init();
@@ -72,6 +77,11 @@ function bindEvents() {
   els.form.addEventListener('submit', event => {
     event.preventDefault();
     saveOrderFromForm();
+  });
+
+  els.closeDetails.addEventListener('click', closeDetails);
+  els.detailsDialog.addEventListener('click', event => {
+    if (event.target === els.detailsDialog) closeDetails();
   });
 }
 
@@ -140,15 +150,18 @@ function render() {
     .filter(order => order.status === 'done')
     .sort((a, b) => new Date(b.arrivedAt || b.updatedAt || b.date) - new Date(a.arrivedAt || a.updatedAt || a.date));
 
-  renderSummary(openOrders);
+  renderSummary(openOrders, doneOrders);
   renderList(els.openList, filterOrders(openOrders, els.openSearch.value), 'open');
   renderList(els.doneList, filterOrders(doneOrders, els.doneSearch.value), 'done');
 }
 
-function renderSummary(openOrders) {
+function renderSummary(openOrders, doneOrders) {
   const count = openOrders.length;
   const total = openOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
   els.openSummary.textContent = `בדרך אלייך עכשיו: ${count} ${count === 1 ? 'חבילה' : 'חבילות'} · ${formatCurrency(total)}`;
+  els.doneSummary.textContent = doneOrders.length
+    ? `${doneOrders.length} ${doneOrders.length === 1 ? 'הזמנה הגיעה' : 'הזמנות הגיעו'} · מצאת משהו מהעבר?`
+    : 'מצאת משהו מהעבר?';
 
   const moods = count === 0
     ? ['אין כלום בדרך. חשוד מאוד.', 'היקום רגוע מדי. לא טבעי.']
@@ -168,49 +181,107 @@ function renderList(container, list, type) {
     return;
   }
 
-  container.innerHTML = list.map(order => orderCardHtml(order, type)).join('');
+  container.innerHTML = list.map(order => type === 'open' ? openCardHtml(order) : doneCardHtml(order)).join('');
 
   container.querySelectorAll('[data-action]').forEach(button => {
-    button.addEventListener('click', () => handleCardAction(button.dataset.action, button.dataset.id));
+    button.addEventListener('click', event => {
+      event.stopPropagation();
+      handleAction(button.dataset.action, button.dataset.id);
+    });
+  });
+
+  container.querySelectorAll('[data-open-details]').forEach(card => {
+    card.addEventListener('click', () => openDetails(card.dataset.openDetails));
   });
 }
 
-function orderCardHtml(order, type) {
+function openCardHtml(order) {
   const cat = getCategory(order.category);
-  const tracking = order.tracking ? `<span>מעקב: ${escapeHtml(order.tracking)}</span>` : '';
-  const note = order.note ? `<p class="note">${escapeHtml(order.note)}</p>` : '';
-  const doneClass = type === 'done' ? ' done' : '';
-  const actionButton = type === 'open'
-    ? `<button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע!!!</button>`
-    : `<button class="restore-btn" data-action="restore" data-id="${order.id}" type="button">החזירי לבדרך</button>`;
-  const copyButton = order.tracking
-    ? `<button class="copy-btn" data-action="copy" data-id="${order.id}" type="button">העתקת מעקב</button>`
-    : '';
-
   return `
-    <article class="order-card ${cat.bg}${doneClass}">
-      <div class="card-top">
-        <h3 class="store">${escapeHtml(order.store)}</h3>
-        <span class="category-pill ${cat.cls}">${cat.label}</span>
+    <article class="order-card open-card ${cat.bg}" data-open-details="${order.id}">
+      <div class="card-main">
+        <div class="card-top">
+          <h3 class="store">${escapeHtml(order.store)}</h3>
+          <span class="price">${formatCurrency(order.amount)}</span>
+        </div>
+        <p class="item">${escapeHtml(order.item)}</p>
+        <div class="card-footer">
+          <span>${formatDate(order.date)}</span>
+          <span>·</span>
+          <span class="category-pill ${cat.cls}">${cat.label}</span>
+          ${(order.tracking || order.note) ? '<button class="more-btn" data-action="details" data-id="' + order.id + '" type="button">פרטים</button>' : ''}
+        </div>
       </div>
-      <p class="item">${escapeHtml(order.item)}</p>
-      <div class="meta">
-        <span>${formatCurrency(order.amount)}</span>
-        <span>הוזמן: ${formatDate(order.date)}</span>
-        ${tracking}
-      </div>
-      ${note}
-      <div class="card-actions">
-        ${actionButton}
-        ${copyButton}
-        <button class="edit-btn" data-action="edit" data-id="${order.id}" type="button">עריכה</button>
-        <button class="delete-btn" data-action="delete" data-id="${order.id}" type="button">מחיקה</button>
-      </div>
+      <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע!!!</button>
     </article>
   `;
 }
 
-function handleCardAction(action, id) {
+function doneCardHtml(order) {
+  const cat = getCategory(order.category);
+  return `
+    <article class="order-card history-card ${cat.bg}" data-open-details="${order.id}">
+      <h3 class="store">${escapeHtml(order.store)}</h3>
+      <p class="item">${escapeHtml(order.item)}</p>
+      <span class="category-pill ${cat.cls}">${cat.label}</span>
+      <span class="price">${formatCurrency(order.amount)}</span>
+      <span class="card-footer">${formatDate(order.date)}</span>
+      <span class="arrived-label">✓ הגיע</span>
+      <button class="more-btn" data-action="details" data-id="${order.id}" type="button">פרטים</button>
+    </article>
+  `;
+}
+
+function openDetails(id) {
+  const order = orders.find(item => item.id === id);
+  if (!order) return;
+  activeDetailsId = id;
+  const cat = getCategory(order.category);
+  const tracking = order.tracking || '—';
+  const note = order.note ? `<div class="details-note">${escapeHtml(order.note)}</div>` : '';
+  const statusAction = order.status === 'open'
+    ? `<button class="dialog-action primary" data-action="arrive" data-id="${order.id}" type="button">הגיע!!!</button>`
+    : `<button class="dialog-action soft" data-action="restore" data-id="${order.id}" type="button">החזירי לבדרך</button>`;
+  const copyButton = order.tracking
+    ? `<button class="dialog-action" data-action="copy" data-id="${order.id}" type="button">העתקת מעקב</button>`
+    : '';
+
+  els.detailsContent.innerHTML = `
+    <h3 class="details-title">${escapeHtml(order.store)}</h3>
+    <p class="details-item">${escapeHtml(order.item)}</p>
+    <span class="category-pill ${cat.cls}">${cat.label}</span>
+    <div class="details-grid">
+      <div class="details-row"><b>סכום</b><span>${formatCurrency(order.amount)}</span></div>
+      <div class="details-row"><b>הוזמן</b><span>${formatDate(order.date)}</span></div>
+      <div class="details-row"><b>מעקב</b><span>${escapeHtml(tracking)}</span></div>
+    </div>
+    ${note}
+    <div class="dialog-actions">
+      ${statusAction}
+      ${copyButton}
+      <button class="dialog-action" data-action="edit" data-id="${order.id}" type="button">עריכה</button>
+      <button class="dialog-action danger" data-action="delete" data-id="${order.id}" type="button">מחיקה</button>
+    </div>
+  `;
+
+  els.detailsContent.querySelectorAll('[data-action]').forEach(button => {
+    button.addEventListener('click', () => handleAction(button.dataset.action, button.dataset.id));
+  });
+
+  if (!els.detailsDialog.open) els.detailsDialog.showModal();
+}
+
+function closeDetails() {
+  activeDetailsId = null;
+  if (els.detailsDialog.open) els.detailsDialog.close();
+}
+
+function handleAction(action, id) {
+  if (action === 'details') {
+    openDetails(id);
+    return;
+  }
+
   const order = orders.find(item => item.id === id);
   if (!order) return;
 
@@ -218,12 +289,14 @@ function handleCardAction(action, id) {
     order.status = 'done';
     order.arrivedAt = new Date().toISOString();
     showToast('ברוכה הבאה הביתה, חבילה קטנה.');
+    closeDetails();
   }
 
   if (action === 'restore') {
     order.status = 'open';
     delete order.arrivedAt;
     showToast('הוחזרה לבדרך. הדרמה ממשיכה.');
+    closeDetails();
   }
 
   if (action === 'delete') {
@@ -231,10 +304,12 @@ function handleCardAction(action, id) {
     if (!ok) return;
     orders = orders.filter(item => item.id !== id);
     showToast('נמחק. לא ראינו, לא שמענו.');
+    closeDetails();
   }
 
   if (action === 'edit') {
     fillForm(order);
+    closeDetails();
     showScreen('form');
     return;
   }
@@ -352,6 +427,19 @@ function demoOrders() {
       tracking: 'HM-555',
       note: '',
       category: 'clothes',
+      createdAt: new Date().toISOString(),
+      arrivedAt: new Date().toISOString()
+    },
+    {
+      id: 'demo-4',
+      status: 'done',
+      date: '2026-06-10',
+      store: 'iHerb',
+      item: 'סרום ויטמין סי',
+      amount: 64,
+      tracking: 'IH-1208',
+      note: 'לא להכניס עוד סרומים לשגרה בלי לחשוב',
+      category: 'beauty',
       createdAt: new Date().toISOString(),
       arrivedAt: new Date().toISOString()
     }
