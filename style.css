@@ -576,3 +576,48 @@ input, textarea { color: var(--ink); }
   .history-card { min-height: 126px; padding: 12px 10px 11px 15px; }
   .fab { bottom: 88px; }
 }
+
+
+/* === Backup / Restore panel === */
+.backup-panel {
+  margin: 18px auto 96px;
+  padding: 14px;
+  max-width: 560px;
+  background: rgba(255, 253, 250, 0.86);
+  border: 1px solid rgba(47, 42, 38, 0.10);
+  border-radius: 22px;
+  box-shadow: 0 10px 24px rgba(89, 55, 38, 0.08);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  direction: rtl;
+}
+
+.backup-title {
+  grid-column: 1 / -1;
+  font-weight: 900;
+  color: #2f2a26;
+  text-align: center;
+  font-size: 15px;
+}
+
+.backup-action {
+  border: 0;
+  border-radius: 16px;
+  padding: 12px 10px;
+  font-weight: 900;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.backup-export {
+  background: linear-gradient(135deg, #efb6ae, #e19b94);
+  color: white;
+  box-shadow: 0 10px 20px rgba(225, 155, 148, 0.18);
+}
+
+.backup-import {
+  background: #f6ece6;
+  color: #2f2a26;
+  border: 1px solid rgba(210, 142, 135, 0.22);
+}
