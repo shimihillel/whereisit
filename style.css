@@ -109,3 +109,74 @@ button,input,textarea{font:inherit}button{cursor:pointer}input,textarea{color:va
 .backup-action{border:0;border-radius:14px;padding:12px 10px;font-weight:900;font-size:14px;cursor:pointer}
 .backup-export{background:var(--sage);color:#fff;box-shadow:0 10px 20px rgba(79,102,88,.16)}
 .backup-import{background:var(--sage-soft);color:var(--sage-dark);border:1px solid rgba(100,127,108,.22)}
+
+
+/* === v4 repaired layout fixes === */
+.backup-panel-mount {
+  margin: 0 0 14px;
+}
+
+.backup-panel {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  direction: rtl;
+}
+
+.backup-title { display: none; }
+
+.backup-action {
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  padding: 11px 10px;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.backup-export {
+  background: var(--sage);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(79,102,88,.13);
+}
+
+.backup-import {
+  background: #fff;
+  color: var(--sage-dark);
+  border: 1px solid rgba(100,127,108,.25);
+}
+
+.wide-add-btn,
+.fab.wide-add-btn {
+  position: static !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 100%;
+  margin: 14px 0 0;
+  padding: 15px 18px;
+  display: block;
+  border-radius: 14px;
+  text-align: center;
+  z-index: auto;
+}
+
+.section-head {
+  justify-content: flex-start !important;
+}
+
+.solo-title {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.open-list {
+  margin-top: 0;
+  display: grid;
+  gap: 12px;
+}
