@@ -47,7 +47,7 @@ button,input,textarea{font:inherit}button{cursor:pointer}input,textarea{color:va
 .stat-box strong{display:block;font-size:1.18rem;line-height:1.05;color:var(--sage-dark)}.stat-box span{display:block;margin-top:4px;color:var(--muted);font-size:.75rem;font-weight:700}
 .mood-line{margin:0;color:var(--muted);font-size:.87rem;font-weight:650}
 .toolbar{margin:0 0 14px}.search-wrap{display:flex;flex-direction:row-reverse;align-items:center;gap:10px;padding:14px 15px;border:1px solid var(--line-strong);border-radius:16px;background:#fff;box-shadow:none}.search-wrap input{width:100%;border:0;background:transparent;outline:0;font-size:1rem;font-weight:630;color:var(--ink-soft)}.search-wrap span{font-size:1.35rem;color:#7f8781}.search-wrap:focus-within,.field input:focus,.field textarea:focus{outline:3px solid rgba(100,127,108,.11);border-color:rgba(100,127,108,.42)}
-.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:2px 2px 0}.section-title-wrap{display:flex;align-items:center;gap:8px}.section-title{margin:0;font-size:1.16rem;font-weight:900}.section-link{color:var(--sage);text-decoration:none;font-size:.95rem;font-weight:740}.section-badge{height:30px;min-width:30px;padding:0 8px;display:inline-grid;place-items:center;border-radius:999px;background:var(--sage);color:#fff;font-size:.86rem;font-weight:850}
+.section-head{display:flex;align-items:center;justify-content:flex-start;margin-bottom:12px;padding:2px 2px 0}.section-title-wrap{display:flex;align-items:center;gap:8px}.section-title{margin:0;font-size:1.16rem;font-weight:900}.section-link{color:var(--sage);text-decoration:none;font-size:.95rem;font-weight:740}.section-badge{height:30px;min-width:30px;padding:0 8px;display:inline-grid;place-items:center;border-radius:999px;background:var(--sage);color:#fff;font-size:.86rem;font-weight:850}
 .order-list{margin-top:0}.open-list{display:grid;gap:12px}.history-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .order-card{position:relative;overflow:hidden}
 .open-card{display:grid;grid-template-columns:116px 1fr;gap:16px;padding:16px 16px 16px 18px;align-items:stretch}
@@ -85,3 +85,27 @@ button,input,textarea{font:inherit}button{cursor:pointer}input,textarea{color:va
 .toast{position:fixed;left:50%;bottom:156px;transform:translateX(-50%);width:min(430px,calc(100% - 32px));padding:13px 16px;border-radius:16px;background:var(--panel);color:var(--ink);font-weight:860;text-align:center;box-shadow:0 16px 34px rgba(18,27,22,.14);border:1px solid var(--line)}
 .backup-panel{margin:18px auto 96px;padding:14px;max-width:560px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl}.backup-title{grid-column:1/-1;font-weight:900;color:var(--ink);text-align:center;font-size:15px}.backup-action{padding:12px 10px}.backup-import{background:var(--sage-soft);color:var(--sage-dark);border:1px solid rgba(100,127,108,.22)}
 @media (max-width:410px){.title-wrap h1{font-size:2.15rem}.mockup-summary{grid-template-columns:72px 1fr;padding:16px}.summary-figure{width:72px;height:72px}.summary-figure img{width:56px;height:56px}.summary-line{font-size:1.15rem}.open-card{grid-template-columns:100px 1fr;gap:12px;padding:14px}.store{font-size:1.28rem}.item{font-size:.99rem}.history-grid{gap:10px}.fab{bottom:92px}}
+
+.solo-title{width:100%;justify-content:flex-start}
+.wide-add-btn{
+  position: static !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  width: 100%;
+  margin-top: 12px;
+  padding: 15px 18px;
+  display: block;
+  border-radius: 14px;
+  text-align: center;
+}
+/* neutralize old floating styles if any remain */
+.fab{position: static; z-index:auto; right:auto; bottom:auto; display:block}
+
+
+/* === Backup / Restore panel === */
+.backup-panel{margin:18px auto 96px;padding:14px;max-width:560px;background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);display:grid;grid-template-columns:1fr 1fr;gap:10px;direction:rtl}
+.backup-title{grid-column:1/-1;font-weight:900;color:var(--ink);text-align:center;font-size:15px}
+.backup-action{border:0;border-radius:14px;padding:12px 10px;font-weight:900;font-size:14px;cursor:pointer}
+.backup-export{background:var(--sage);color:#fff;box-shadow:0 10px 20px rgba(79,102,88,.16)}
+.backup-import{background:var(--sage-soft);color:var(--sage-dark);border:1px solid rgba(100,127,108,.22)}
