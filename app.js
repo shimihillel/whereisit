@@ -212,7 +212,7 @@ function openCardHtml(order) {
           ${(order.tracking || order.note) ? '<button class="more-btn" data-action="details" data-id="' + order.id + '" type="button">פרטים</button>' : ''}
         </div>
       </div>
-      <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע!</button>
+      <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>
     </article>
   `;
 }
@@ -240,7 +240,7 @@ function openDetails(id) {
   const tracking = order.tracking || '—';
   const note = order.note ? `<div class="details-note">${escapeHtml(order.note)}</div>` : '';
   const statusAction = order.status === 'open'
-    ? `<button class="dialog-action primary" data-action="arrive" data-id="${order.id}" type="button">הגיע!</button>`
+    ? `<button class="dialog-action primary" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>`
     : `<button class="dialog-action soft" data-action="restore" data-id="${order.id}" type="button">החזירי לבדרך</button>`;
   const copyButton = order.tracking
     ? `<button class="dialog-action" data-action="copy" data-id="${order.id}" type="button">העתקת מעקב</button>`
@@ -528,7 +528,7 @@ if ('serviceWorker' in navigator) {
 
     return {
       app: "איפה זה?!",
-      version: "v2-soft-backup",
+      version: "v3-sage-backup",
       exportedAt: new Date().toISOString(),
       origin: location.origin,
       href: location.href,

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eifo-ze-v2-soft-backup';
+const CACHE_NAME = 'eifo-ze-v3-sage-hand-icon-backup';
 const ASSETS = [
   './',
   './index.html',
