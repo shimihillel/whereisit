@@ -31,6 +31,11 @@ const els = {
   openSummary: document.getElementById('openSummary'),
   doneSummary: document.getElementById('doneSummary'),
   moodLine: document.getElementById('moodLine'),
+  statOpenCount: document.getElementById('statOpenCount'),
+  statDoneCount: document.getElementById('statDoneCount'),
+  statTotalAmount: document.getElementById('statTotalAmount'),
+  openSectionCount: document.getElementById('openSectionCount'),
+  doneSectionCount: document.getElementById('doneSectionCount'),
   form: document.getElementById('orderForm'),
   formTitle: document.getElementById('formTitle'),
   cancelEdit: document.getElementById('cancelEdit'),
@@ -158,14 +163,21 @@ function render() {
 function renderSummary(openOrders, doneOrders) {
   const count = openOrders.length;
   const total = openOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
-  els.openSummary.textContent = `בדרך אלייך עכשיו: ${count} ${count === 1 ? 'חבילה' : 'חבילות'} · ${formatCurrency(total)}`;
-  els.doneSummary.textContent = doneOrders.length
-    ? `${doneOrders.length} ${doneOrders.length === 1 ? 'הזמנה הגיעה' : 'הזמנות הגיעו'} · מצאת משהו מהעבר?`
+  const doneCount = doneOrders.length;
+  els.openSummary.textContent = `יש לך ${count} ${count === 1 ? 'חבילה' : 'חבילות'} בדרך`;
+  els.doneSummary.textContent = doneCount
+    ? `${doneCount} ${doneCount === 1 ? 'הזמנה הגיעה' : 'הזמנות הגיעו'} · מצאת משהו מהעבר?`
     : 'מצאת משהו מהעבר?';
+
+  els.statOpenCount.textContent = count;
+  els.statDoneCount.textContent = doneCount;
+  els.statTotalAmount.textContent = formatCurrency(total);
+  els.openSectionCount.textContent = count;
+  els.doneSectionCount.textContent = doneCount;
 
   const moods = count === 0
     ? ['אין כלום בדרך. חשוד מאוד.', 'היקום רגוע מדי. לא טבעי.']
-    : ['זה לא בזבוז אם זה עוד לא הגיע.', 'לחכות לחבילות זה הקרדיו החדש.', 'שימי, מה הזמנת הפעם?'];
+    : ['לחכות לחבילות זה הקרדיו החדש.', 'עוד רגע זה כאן.', 'שימי, זה בדרך אלייך.'];
   els.moodLine.textContent = moods[Math.floor(Math.random() * moods.length)];
 }
 
@@ -197,22 +209,32 @@ function renderList(container, list, type) {
 
 function openCardHtml(order) {
   const cat = getCategory(order.category);
+  const statusText = 'בדרך';
+  const trackingText = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
   return `
     <article class="order-card open-card ${cat.bg}" data-open-details="${order.id}">
+      <div class="card-side">
+        <span class="status-chip">${statusText}</span>
+        <div class="side-meta">
+          <span class="meta-track">${trackingText}</span>
+          <span class="meta-date">${formatDate(order.date)}</span>
+        </div>
+        <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>
+      </div>
       <div class="card-main">
         <div class="card-top">
-          <h3 class="store">${escapeHtml(order.store)}</h3>
-          <span class="price">${formatCurrency(order.amount)}</span>
+          <div class="card-brand">${escapeHtml(brandBadge(order.store))}</div>
+          <div class="text-block">
+            <h3 class="store">${escapeHtml(order.store)}</h3>
+            <p class="item">${escapeHtml(order.item)}</p>
+            <span class="price">${formatCurrency(order.amount)}</span>
+          </div>
         </div>
-        <p class="item">${escapeHtml(order.item)}</p>
         <div class="card-footer">
-          <span>${formatDate(order.date)}</span>
-          <span>·</span>
           <span class="category-pill ${cat.cls}">${cat.label}</span>
           ${(order.tracking || order.note) ? '<button class="more-btn" data-action="details" data-id="' + order.id + '" type="button">פרטים</button>' : ''}
         </div>
       </div>
-      <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>
     </article>
   `;
 }
@@ -221,12 +243,12 @@ function doneCardHtml(order) {
   const cat = getCategory(order.category);
   return `
     <article class="order-card history-card ${cat.bg}" data-open-details="${order.id}">
+      <span class="category-pill ${cat.cls}">${cat.label}</span>
       <h3 class="store">${escapeHtml(order.store)}</h3>
       <p class="item">${escapeHtml(order.item)}</p>
-      <span class="category-pill ${cat.cls}">${cat.label}</span>
       <span class="price">${formatCurrency(order.amount)}</span>
       <span class="card-footer">${formatDate(order.date)}</span>
-      <span class="arrived-label">✓ הגיע</span>
+      <span class="arrived-label">הגיע</span>
       <button class="more-btn" data-action="details" data-id="${order.id}" type="button">פרטים</button>
     </article>
   `;
