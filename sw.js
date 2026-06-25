@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eifo-ze-v4-mockup-repaired';
+const CACHE_NAME = 'eifo-ze-clean-rebuild-1';
 const ASSETS = [
   './',
   './index.html',

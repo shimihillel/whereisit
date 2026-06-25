@@ -23,7 +23,7 @@ const els = {
     done: document.getElementById('screen-done')
   },
   navButtons: document.querySelectorAll('.nav-btn'),
-  addFab: document.getElementById('addFab'),
+  addWide: document.getElementById('addWide'),
   openList: document.getElementById('openList'),
   doneList: document.getElementById('doneList'),
   openSearch: document.getElementById('openSearch'),
@@ -31,11 +31,11 @@ const els = {
   openSummary: document.getElementById('openSummary'),
   doneSummary: document.getElementById('doneSummary'),
   moodLine: document.getElementById('moodLine'),
-  statOpenCount: document.getElementById('statOpenCount'),
-  statDoneCount: document.getElementById('statDoneCount'),
-  statTotalAmount: document.getElementById('statTotalAmount'),
-  openSectionCount: document.getElementById('openSectionCount'),
-  doneSectionCount: document.getElementById('doneSectionCount'),
+  statOpen: document.getElementById('statOpen'),
+  statDone: document.getElementById('statDone'),
+  statAmount: document.getElementById('statAmount'),
+  openBadge: document.getElementById('openBadge'),
+  doneBadge: document.getElementById('doneBadge'),
   form: document.getElementById('orderForm'),
   formTitle: document.getElementById('formTitle'),
   cancelEdit: document.getElementById('cancelEdit'),
@@ -47,10 +47,10 @@ const els = {
   tracking: document.getElementById('tracking'),
   note: document.getElementById('note'),
   categoryChips: document.getElementById('categoryChips'),
-  emptyTemplate: document.getElementById('emptyTemplate'),
   detailsDialog: document.getElementById('detailsDialog'),
   detailsContent: document.getElementById('detailsContent'),
-  closeDetails: document.getElementById('closeDetails')
+  closeDetails: document.getElementById('closeDetails'),
+  backupMount: document.getElementById('backupMount')
 };
 
 init();
@@ -58,36 +58,20 @@ init();
 function init() {
   buildCategoryChips();
   setTodayIfEmpty();
+  injectBackupUI();
   bindEvents();
   render();
 }
 
 function bindEvents() {
-  els.navButtons.forEach(btn => {
-    btn.addEventListener('click', () => showScreen(btn.dataset.screen));
-  });
-
-  els.addFab.addEventListener('click', () => {
-    resetForm();
-    showScreen('form');
-  });
-
+  els.navButtons.forEach(btn => btn.addEventListener('click', () => showScreen(btn.dataset.screen)));
+  els.addWide.addEventListener('click', () => { resetForm(); showScreen('form'); });
   els.openSearch.addEventListener('input', render);
   els.doneSearch.addEventListener('input', render);
-  els.cancelEdit.addEventListener('click', () => {
-    resetForm();
-    showScreen('open');
-  });
-
-  els.form.addEventListener('submit', event => {
-    event.preventDefault();
-    saveOrderFromForm();
-  });
-
+  els.cancelEdit.addEventListener('click', () => { resetForm(); showScreen('open'); });
+  els.form.addEventListener('submit', event => { event.preventDefault(); saveOrderFromForm(); });
   els.closeDetails.addEventListener('click', closeDetails);
-  els.detailsDialog.addEventListener('click', event => {
-    if (event.target === els.detailsDialog) closeDetails();
-  });
+  els.detailsDialog.addEventListener('click', event => { if (event.target === els.detailsDialog) closeDetails(); });
 }
 
 function buildCategoryChips() {
@@ -100,11 +84,8 @@ function buildCategoryChips() {
 }
 
 function showScreen(name) {
-  Object.entries(els.screens).forEach(([key, screen]) => {
-    screen.classList.toggle('active', key === name);
-  });
+  Object.entries(els.screens).forEach(([key, screen]) => screen.classList.toggle('active', key === name));
   els.navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === name));
-  els.addFab.hidden = name === 'form';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -118,18 +99,15 @@ function saveOrderFromForm() {
     amount: Number(els.amount.value || 0),
     tracking: els.tracking.value.trim(),
     note: els.note.value.trim(),
-    category: categoryInput?.value || 'other',
+    category: categoryInput ? categoryInput.value : 'other',
     updatedAt: new Date().toISOString()
   };
 
-  if (!payload.store || !payload.item || !payload.date) {
-    showToast('חסר משהו קטן, גוגי לא מלשין אבל האפליקציה צריכה לדעת.');
-    return;
-  }
+  if (!payload.store || !payload.item || !payload.date) return;
 
   if (editingId) {
     orders = orders.map(order => order.id === editingId ? { ...order, ...payload } : order);
-    showToast('עודכן. החבילה חזרה להיות מסודרת, בערך.');
+    showToast('עודכן. בלי דרמה.');
   } else {
     orders.unshift({
       id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
@@ -137,7 +115,7 @@ function saveOrderFromForm() {
       createdAt: new Date().toISOString(),
       ...payload
     });
-    showToast('נוסף למעקב. לא שופטת, רק מתעדת.');
+    showToast('נכנס למעקב. לא שופטת.');
   }
 
   saveOrders();
@@ -147,61 +125,59 @@ function saveOrderFromForm() {
 }
 
 function render() {
-  const openOrders = orders
-    .filter(order => order.status === 'open')
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const doneOrders = orders
-    .filter(order => order.status === 'done')
-    .sort((a, b) => new Date(b.arrivedAt || b.updatedAt || b.date) - new Date(a.arrivedAt || a.updatedAt || a.date));
+  const openOrders = orders.filter(order => order.status === 'open').sort(sortByDateDesc);
+  const doneOrders = orders.filter(order => order.status === 'done').sort((a, b) => new Date(b.arrivedAt || b.updatedAt || b.date) - new Date(a.arrivedAt || a.updatedAt || a.date));
+  const filteredOpen = filterOrders(openOrders, els.openSearch.value);
+  const filteredDone = filterOrders(doneOrders, els.doneSearch.value);
 
   renderSummary(openOrders, doneOrders);
-  renderList(els.openList, filterOrders(openOrders, els.openSearch.value), 'open');
-  renderList(els.doneList, filterOrders(doneOrders, els.doneSearch.value), 'done');
+  renderOpenList(filteredOpen);
+  renderDoneList(filteredDone);
 }
 
 function renderSummary(openOrders, doneOrders) {
   const count = openOrders.length;
-  const total = openOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
   const doneCount = doneOrders.length;
+  const total = openOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
   els.openSummary.textContent = `יש לך ${count} ${count === 1 ? 'חבילה' : 'חבילות'} בדרך`;
-  els.doneSummary.textContent = doneCount
-    ? `${doneCount} ${doneCount === 1 ? 'הזמנה הגיעה' : 'הזמנות הגיעו'} · מצאת משהו מהעבר?`
-    : 'מצאת משהו מהעבר?';
-
-  els.statOpenCount.textContent = count;
-  els.statDoneCount.textContent = doneCount;
-  els.statTotalAmount.textContent = formatCurrency(total);
-  els.openSectionCount.textContent = count;
-  els.doneSectionCount.textContent = doneCount;
+  els.statOpen.textContent = count;
+  els.statDone.textContent = doneCount;
+  els.statAmount.textContent = formatCurrency(total);
+  els.openBadge.textContent = count;
+  els.doneBadge.textContent = doneCount;
+  els.doneSummary.textContent = doneCount ? `${doneCount} ${doneCount === 1 ? 'הזמנה הגיעה' : 'הזמנות הגיעו'} · מצאת משהו מהעבר?` : 'מצאת משהו מהעבר?';
 
   const moods = count === 0
     ? ['אין כלום בדרך. חשוד מאוד.', 'היקום רגוע מדי. לא טבעי.']
-    : ['לחכות לחבילות זה הקרדיו החדש.', 'עוד רגע זה כאן.', 'שימי, זה בדרך אלייך.'];
+    : ['שימי, זה בדרך אלייך.', 'עוד רגע זה כאן.', 'הדואר עובד בשבילך היום.'];
   els.moodLine.textContent = moods[Math.floor(Math.random() * moods.length)];
 }
 
-function renderList(container, list, type) {
+function renderOpenList(list) {
   if (!list.length) {
-    const empty = els.emptyTemplate.content.cloneNode(true);
-    empty.querySelector('h3').textContent = type === 'open' ? 'אין כלום בדרך' : 'עוד לא הגיע כלום';
-    empty.querySelector('p').textContent = type === 'open'
-      ? 'חשוד מאוד. אבל נזרום.'
-      : 'ברגע שחבילה תגיע, היא תעבור לכאן כמו נס קטן.';
-    container.innerHTML = '';
-    container.appendChild(empty);
+    els.openList.innerHTML = `<div class="empty-state"><div class="empty-sticker">📭</div><h3>אין כלום בדרך</h3><p>חשוד מאוד. אבל נזרום.</p></div>`;
     return;
   }
+  els.openList.innerHTML = list.map(openCardHtml).join('');
+  bindListActions(els.openList);
+}
 
-  container.innerHTML = list.map(order => type === 'open' ? openCardHtml(order) : doneCardHtml(order)).join('');
+function renderDoneList(list) {
+  if (!list.length) {
+    els.doneList.innerHTML = `<div class="empty-state"><div class="empty-sticker">📦</div><h3>עוד לא הגיע כלום</h3><p>ברגע שחבילה תגיע, היא תעבור לכאן.</p></div>`;
+    return;
+  }
+  els.doneList.innerHTML = list.map(doneCardHtml).join('');
+  bindListActions(els.doneList);
+}
 
+function bindListActions(container) {
   container.querySelectorAll('[data-action]').forEach(button => {
     button.addEventListener('click', event => {
       event.stopPropagation();
       handleAction(button.dataset.action, button.dataset.id);
     });
   });
-
   container.querySelectorAll('[data-open-details]').forEach(card => {
     card.addEventListener('click', () => openDetails(card.dataset.openDetails));
   });
@@ -209,23 +185,20 @@ function renderList(container, list, type) {
 
 function openCardHtml(order) {
   const cat = getCategory(order.category);
-  const trackingText = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
-  const storeBadge = escapeHtml(shortStore(order.store));
-
+  const tracking = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
   return `
     <article class="order-card open-card ${cat.bg}" data-open-details="${order.id}">
       <div class="card-side">
-        <span class="status-chip">בדרך</span>
+        <span class="status">בדרך</span>
         <div class="side-meta">
-          <span class="meta-track">${trackingText}</span>
-          <span class="meta-date">${formatDate(order.date)}</span>
+          <span class="track">${tracking}</span>
+          <span>${formatDate(order.date)}</span>
         </div>
         <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>
       </div>
-
       <div class="card-main">
         <div class="card-top">
-          <div class="card-brand">${storeBadge}</div>
+          <div class="brand">${escapeHtml(shortStore(order.store))}</div>
           <div class="text-block">
             <h3 class="store">${escapeHtml(order.store)}</h3>
             <p class="item">${escapeHtml(order.item)}</p>
@@ -233,8 +206,8 @@ function openCardHtml(order) {
           </div>
         </div>
         <div class="card-footer">
-          <span class="category-pill ${cat.cls}">${cat.label}</span>
-          ${(order.tracking || order.note) ? '<button class="more-btn" data-action="details" data-id="' + order.id + '" type="button">פרטים</button>' : ''}
+          <span class="pill ${cat.cls}">${cat.label}</span>
+          ${(order.tracking || order.note) ? `<button class="more-btn" data-action="details" data-id="${order.id}" type="button">פרטים</button>` : ''}
         </div>
       </div>
     </article>
@@ -244,114 +217,55 @@ function openCardHtml(order) {
 function doneCardHtml(order) {
   const cat = getCategory(order.category);
   return `
-    <article class="order-card history-card ${cat.bg}" data-open-details="${order.id}">
-      <span class="category-pill ${cat.cls}">${cat.label}</span>
+    <article class="order-card done-card ${cat.bg}" data-open-details="${order.id}">
+      <span class="pill ${cat.cls}">${cat.label}</span>
       <h3 class="store">${escapeHtml(order.store)}</h3>
       <p class="item">${escapeHtml(order.item)}</p>
       <span class="price">${formatCurrency(order.amount)}</span>
       <span class="card-footer">${formatDate(order.date)}</span>
-      <span class="arrived-label">הגיע</span>
+      <span class="done-label">הגיע</span>
       <button class="more-btn" data-action="details" data-id="${order.id}" type="button">פרטים</button>
     </article>
   `;
 }
 
-function openDetails(id) {
-  const order = orders.find(item => item.id === id);
-  if (!order) return;
-  activeDetailsId = id;
-  const cat = getCategory(order.category);
-  const tracking = order.tracking || '—';
-  const note = order.note ? `<div class="details-note">${escapeHtml(order.note)}</div>` : '';
-  const statusAction = order.status === 'open'
-    ? `<button class="dialog-action primary" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>`
-    : `<button class="dialog-action soft" data-action="restore" data-id="${order.id}" type="button">החזירי לבדרך</button>`;
-  const copyButton = order.tracking
-    ? `<button class="dialog-action" data-action="copy" data-id="${order.id}" type="button">העתקת מעקב</button>`
-    : '';
-
-  els.detailsContent.innerHTML = `
-    <h3 class="details-title">${escapeHtml(order.store)}</h3>
-    <p class="details-item">${escapeHtml(order.item)}</p>
-    <span class="category-pill ${cat.cls}">${cat.label}</span>
-    <div class="details-grid">
-      <div class="details-row"><b>סכום</b><span>${formatCurrency(order.amount)}</span></div>
-      <div class="details-row"><b>הוזמן</b><span>${formatDate(order.date)}</span></div>
-      <div class="details-row"><b>מעקב</b><span>${escapeHtml(tracking)}</span></div>
-    </div>
-    ${note}
-    <div class="dialog-actions">
-      ${statusAction}
-      ${copyButton}
-      <button class="dialog-action" data-action="edit" data-id="${order.id}" type="button">עריכה</button>
-      <button class="dialog-action danger" data-action="delete" data-id="${order.id}" type="button">מחיקה</button>
-    </div>
-  `;
-
-  els.detailsContent.querySelectorAll('[data-action]').forEach(button => {
-    button.addEventListener('click', () => handleAction(button.dataset.action, button.dataset.id));
-  });
-
-  if (!els.detailsDialog.open) els.detailsDialog.showModal();
-}
-
-function closeDetails() {
-  activeDetailsId = null;
-  if (els.detailsDialog.open) els.detailsDialog.close();
-}
-
 function handleAction(action, id) {
-  if (action === 'details') {
-    openDetails(id);
-    return;
-  }
+  if (action === 'arrive') markArrived(id);
+  if (action === 'restore') restoreOrder(id);
+  if (action === 'delete') deleteOrder(id);
+  if (action === 'edit') editOrder(id);
+  if (action === 'copy') copyTracking(id);
+  if (action === 'details') openDetails(id);
+}
 
-  const order = orders.find(item => item.id === id);
-  if (!order) return;
-
-  if (action === 'arrive') {
-    order.status = 'done';
-    order.arrivedAt = new Date().toISOString();
-    showToast('ברוכה הבאה הביתה, חבילה קטנה.');
-    closeDetails();
-  }
-
-  if (action === 'restore') {
-    order.status = 'open';
-    delete order.arrivedAt;
-    showToast('הוחזרה לבדרך. הדרמה ממשיכה.');
-    closeDetails();
-  }
-
-  if (action === 'delete') {
-    const ok = window.confirm('למחוק כאילו זה לא קרה?');
-    if (!ok) return;
-    orders = orders.filter(item => item.id !== id);
-    showToast('נמחק. לא ראינו, לא שמענו.');
-    closeDetails();
-  }
-
-  if (action === 'edit') {
-    fillForm(order);
-    closeDetails();
-    showScreen('form');
-    return;
-  }
-
-  if (action === 'copy') {
-    copyTracking(order.tracking);
-    return;
-  }
-
+function markArrived(id) {
+  orders = orders.map(order => order.id === id ? { ...order, status: 'done', arrivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } : order);
   saveOrders();
+  closeDetails();
+  render();
+  showToast('הגיעה. איזה רגע.');
+}
+
+function restoreOrder(id) {
+  orders = orders.map(order => order.id === id ? { ...order, status: 'open', updatedAt: new Date().toISOString() } : order);
+  saveOrders();
+  closeDetails();
   render();
 }
 
-function fillForm(order) {
-  els.formTitle.textContent = 'עריכת הזמנה';
-  els.cancelEdit.hidden = false;
+function deleteOrder(id) {
+  if (!confirm('למחוק כאילו זה לא קרה?')) return;
+  orders = orders.filter(order => order.id !== id);
+  saveOrders();
+  closeDetails();
+  render();
+}
+
+function editOrder(id) {
+  const order = orders.find(item => item.id === id);
+  if (!order) return;
   els.editingId.value = order.id;
-  els.date.value = order.date || todayString();
+  els.date.value = order.date || '';
   els.store.value = order.store || '';
   els.item.value = order.item || '';
   els.amount.value = order.amount || '';
@@ -359,20 +273,66 @@ function fillForm(order) {
   els.note.value = order.note || '';
   const input = document.querySelector(`input[name="category"][value="${order.category || 'other'}"]`);
   if (input) input.checked = true;
+  els.formTitle.textContent = 'עריכת הזמנה';
+  els.cancelEdit.hidden = false;
+  closeDetails();
+  showScreen('form');
+}
+
+function openDetails(id) {
+  const order = orders.find(item => item.id === id);
+  if (!order) return;
+  const cat = getCategory(order.category);
+  const statusAction = order.status === 'open'
+    ? `<button class="dialog-action primary" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>`
+    : `<button class="dialog-action soft" data-action="restore" data-id="${order.id}" type="button">החזירי לבדרך</button>`;
+  const copyButton = order.tracking ? `<button class="dialog-action" data-action="copy" data-id="${order.id}" type="button">העתקת מעקב</button>` : '';
+  els.detailsContent.innerHTML = `
+    <h2 class="details-title">${escapeHtml(order.store)}</h2>
+    <p class="details-item">${escapeHtml(order.item)}</p>
+    <div class="details-grid">
+      <div class="details-row"><b>סכום</b><span>${formatCurrency(order.amount)}</span></div>
+      <div class="details-row"><b>תאריך</b><span>${formatDate(order.date)}</span></div>
+      <div class="details-row"><b>קטגוריה</b><span>${cat.label}</span></div>
+      <div class="details-row"><b>מעקב</b><span>${escapeHtml(order.tracking || '—')}</span></div>
+    </div>
+    ${order.note ? `<div class="details-note">${escapeHtml(order.note)}</div>` : ''}
+    <div class="dialog-actions">
+      ${statusAction}
+      ${copyButton}
+      <button class="dialog-action" data-action="edit" data-id="${order.id}" type="button">עריכה</button>
+      <button class="dialog-action danger" data-action="delete" data-id="${order.id}" type="button">מחיקה</button>
+    </div>
+  `;
+  els.detailsContent.querySelectorAll('[data-action]').forEach(button => {
+    button.addEventListener('click', () => handleAction(button.dataset.action, button.dataset.id));
+  });
+  els.detailsDialog.showModal();
+}
+
+function closeDetails() {
+  if (els.detailsDialog.open) els.detailsDialog.close();
+}
+
+function copyTracking(id) {
+  const order = orders.find(item => item.id === id);
+  if (!order || !order.tracking) return;
+  navigator.clipboard?.writeText(order.tracking);
+  showToast('הועתק.');
 }
 
 function resetForm() {
   els.form.reset();
+  els.editingId.value = '';
   els.formTitle.textContent = 'הוספת הזמנה';
   els.cancelEdit.hidden = true;
-  els.editingId.value = '';
-  setTodayIfEmpty(true);
-  const firstCategory = document.querySelector('input[name="category"]');
-  if (firstCategory) firstCategory.checked = true;
+  setTodayIfEmpty();
+  const first = document.querySelector('input[name="category"]');
+  if (first) first.checked = true;
 }
 
-function setTodayIfEmpty(force = false) {
-  if (force || !els.date.value) els.date.value = todayString();
+function setTodayIfEmpty() {
+  if (!els.date.value) els.date.value = new Date().toISOString().slice(0, 10);
 }
 
 function filterOrders(list, query) {
@@ -382,32 +342,49 @@ function filterOrders(list, query) {
     .some(value => String(value || '').toLowerCase().includes(q)));
 }
 
-function getCategory(id) {
-  return categories.find(cat => cat.id === id) || categories[categories.length - 1];
+function sortByDateDesc(a, b) {
+  return new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0);
+}
+
+function getCategory(categoryId) {
+  return categories.find(cat => cat.id === categoryId) || categories[categories.length - 1];
+}
+
+function shortStore(store) {
+  const clean = String(store || '').trim();
+  if (!clean) return 'SHOP';
+  const latin = clean.replace(/[^A-Za-z0-9 ]/g, '').trim();
+  if (latin) {
+    const parts = latin.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) return parts[0].slice(0, 4).toUpperCase();
+    return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
+  }
+  return clean.slice(0, 2);
 }
 
 function formatCurrency(value) {
-  const num = Number(value || 0);
-  return new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', maximumFractionDigits: num % 1 ? 2 : 0 }).format(num);
+  const number = Number(value || 0);
+  return `₪ ${number.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`;
 }
 
 function formatDate(dateString) {
   if (!dateString) return '';
-  const date = new Date(`${dateString}T12:00:00`);
-  return new Intl.DateTimeFormat('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' }).format(date);
+  const date = new Date(`${dateString}T00:00:00`);
+  return date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
-function todayString() {
-  return new Date().toISOString().slice(0, 10);
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[char]));
 }
 
 function loadOrders() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : demoOrders();
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
   } catch (error) {
-    console.warn('Could not load orders', error);
-    return demoOrders();
+    return [];
   }
 }
 
@@ -415,189 +392,77 @@ function saveOrders() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
 }
 
-function demoOrders() {
-  return [
-    {
-      id: 'demo-1',
-      status: 'open',
-      date: '2026-06-22',
-      store: 'ZARA',
-      item: 'שמלה מנומרת',
-      amount: 199,
-      tracking: 'ZR-8421',
-      note: 'בשם המדע והסטייל',
-      category: 'clothes',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'demo-2',
-      status: 'open',
-      date: '2026-06-20',
-      store: 'AliExpress',
-      item: 'עגילי כוכבים',
-      amount: 48,
-      tracking: '',
-      note: '',
-      category: 'jewelry',
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: 'demo-3',
-      status: 'done',
-      date: '2026-06-12',
-      store: 'H&M',
-      item: 'טי שירט',
-      amount: 79,
-      tracking: 'HM-555',
-      note: '',
-      category: 'clothes',
-      createdAt: new Date().toISOString(),
-      arrivedAt: new Date().toISOString()
-    },
-    {
-      id: 'demo-4',
-      status: 'done',
-      date: '2026-06-10',
-      store: 'iHerb',
-      item: 'סרום ויטמין סי',
-      amount: 64,
-      tracking: 'IH-1208',
-      note: 'לא להכניס עוד סרומים לשגרה בלי לחשוב',
-      category: 'beauty',
-      createdAt: new Date().toISOString(),
-      arrivedAt: new Date().toISOString()
-    }
-  ];
-}
-
-async function copyTracking(tracking) {
-  if (!tracking) return;
-  try {
-    await navigator.clipboard.writeText(tracking);
-    showToast('מספר המעקב הועתק. עכשיו אפשר לרדוף אחרי הדואר.');
-  } catch (error) {
-    showToast(`מספר מעקב: ${tracking}`);
-  }
-}
-
 function showToast(message) {
-  const oldToast = document.querySelector('.toast');
-  if (oldToast) oldToast.remove();
-  const toast = document.createElement('div');
-  toast.className = 'toast';
+  let toast = document.querySelector('.toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
   toast.textContent = message;
-  document.body.appendChild(toast);
-  setTimeout(() => toast.remove(), 2600);
+  toast.hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => { toast.hidden = true; }, 1900);
 }
 
-function escapeHtml(value) {
-  return String(value || '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
-}
+function injectBackupUI() {
+  const panel = document.createElement('div');
+  panel.className = 'backup-panel';
+  const exportBtn = document.createElement('button');
+  exportBtn.type = 'button';
+  exportBtn.className = 'backup-export';
+  exportBtn.textContent = 'הורידי גיבוי';
+  const importBtn = document.createElement('button');
+  importBtn.type = 'button';
+  importBtn.className = 'backup-import';
+  importBtn.textContent = 'שחזרי מגיבוי';
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'application/json,.json';
+  fileInput.hidden = true;
 
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  });
-}
-
-
-/* === Backup / Restore tools === */
-(function setupBackupRestoreTools() {
-  function getAllAppData() {
+  exportBtn.addEventListener('click', () => {
     const storage = {};
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
       storage[key] = localStorage.getItem(key);
     }
-    return {
+    const backup = {
       app: 'איפה זה?!',
-      version: 'v4-mockup-repaired',
+      version: 'clean-rebuild',
       exportedAt: new Date().toISOString(),
-      origin: location.origin,
-      href: location.href,
       storageKey: STORAGE_KEY,
       localStorage: storage
     };
-  }
-
-  function downloadBackup() {
-    const data = getAllAppData();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json;charset=utf-8' });
-    const date = new Date().toISOString().slice(0, 10);
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `eifo-ze-backup-${date}.json`;
+    a.download = `eifo-ze-backup-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
-    setTimeout(() => {
-      URL.revokeObjectURL(a.href);
-      a.remove();
-    }, 1000);
-    showToast('הגיבוי ירד לקובץ. עכשיו אפשר לנשום.');
-  }
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    showToast('הגיבוי ירד.');
+  });
 
-  function restoreBackupFromFile(file) {
+  importBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       try {
         const backup = JSON.parse(reader.result);
-        if (!backup || !backup.localStorage) {
-          showToast('זה לא נראה כמו קובץ גיבוי תקין.');
-          return;
-        }
-        Object.entries(backup.localStorage).forEach(([key, value]) => {
-          localStorage.setItem(key, value);
-        });
-        showToast('שוחזר! האפליקציה תיטען מחדש עכשיו.');
+        if (!backup.localStorage) throw new Error('bad backup');
+        Object.entries(backup.localStorage).forEach(([key, value]) => localStorage.setItem(key, value));
+        showToast('שוחזר. טוענת מחדש.');
         setTimeout(() => location.reload(), 700);
-      } catch (e) {
-        showToast('לא הצלחתי לקרוא את קובץ הגיבוי.');
+      } catch (error) {
+        showToast('קובץ גיבוי לא תקין.');
       }
     };
     reader.readAsText(file);
-  }
+  });
 
-  function injectBackupUI() {
-    if (document.querySelector('.backup-panel')) return;
-
-    const panel = document.createElement('div');
-    panel.className = 'backup-panel';
-
-    const exportBtn = document.createElement('button');
-    exportBtn.type = 'button';
-    exportBtn.className = 'backup-action backup-export';
-    exportBtn.textContent = 'הורידי גיבוי';
-    exportBtn.addEventListener('click', downloadBackup);
-
-    const importBtn = document.createElement('button');
-    importBtn.type = 'button';
-    importBtn.className = 'backup-action backup-import';
-    importBtn.textContent = 'שחזרי מגיבוי';
-
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'application/json,.json';
-    input.hidden = true;
-
-    importBtn.addEventListener('click', () => input.click());
-    input.addEventListener('change', () => {
-      if (input.files && input.files[0]) restoreBackupFromFile(input.files[0]);
-    });
-
-    panel.append(exportBtn, importBtn, input);
-
-    const mount = document.getElementById('backupPanelMount') || document.querySelector('main') || document.body;
-    mount.appendChild(panel);
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectBackupUI);
-  } else {
-    injectBackupUI();
-  }
-})();
+  panel.append(exportBtn, importBtn, fileInput);
+  els.backupMount.appendChild(panel);
+}
