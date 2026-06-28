@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f6f7f5" />
+  <meta name="theme-color" content="#f8f5ef" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="איפה זה?!" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -15,38 +15,36 @@
 </head>
 <body>
   <div class="app-shell">
-    <header class="top-header">
-      <button class="top-icon" type="button" aria-label="התראות">◔<span></span></button>
+    <header class="brand-header">
       <h1>איפה זה?!</h1>
-      <button class="top-icon" type="button" aria-label="תפריט">☰</button>
+      <p id="heroLine">אין מה לומר. הכל בדרך או בראש.</p>
     </header>
 
     <main>
-      <section id="screen-open" class="screen active">
+      <section id="screen-open" class="screen active" aria-label="בדרך">
         <div class="summary-card">
-          <div class="summary-icon"><img src="icon-192.png" alt="" /></div>
-          <div class="summary-content">
-            <div class="summary-kicker">בדרך אלייך עכשיו</div>
-            <div class="summary-title" id="openSummary">יש לך 0 חבילות בדרך</div>
-            <div class="summary-stats">
-              <div><b id="statAmount">₪0</b><span>מחכה לי</span></div>
-              <div><b id="statDone">0</b><span>כבר אצלי</span></div>
-              <div><b id="statOpen">0</b><span>בדרך</span></div>
+          <div class="summary-copy">
+            <div class="summary-kicker">בדרך עכשיו</div>
+            <div id="openSummary" class="summary-title">יש לך 0 חבילות בדרך</div>
+            <div class="summary-inline-stats">
+              <span><b id="statOpen">0</b> חבילות</span>
+              <span class="divider">•</span>
+              <span><b id="statAmount">₪0</b></span>
             </div>
-            <div class="summary-mood" id="moodLine">אין כלום בדרך. חשוד מאוד.</div>
+            <div id="moodLine" class="summary-mood">הדואר עובד בשבילך היום.</div>
+            <div class="summary-secondary">כבר אצלי: <b id="statDone">0</b></div>
           </div>
+          <div class="summary-sticker" aria-hidden="true">📦</div>
         </div>
-
-        <div id="backupMount"></div>
 
         <label class="search-box">
           <input id="openSearch" type="search" placeholder="חפשי חנות, פריט או מספר הזמנה..." autocomplete="off" />
           <span>⌕</span>
         </label>
 
-        <div class="section-head">
+        <div class="section-row">
           <div class="section-title">
-            <span id="openBadge">0</span>
+            <span id="openBadge" class="section-badge">0</span>
             <h2>הזמנות פעילות</h2>
           </div>
         </div>
@@ -56,11 +54,11 @@
         <button id="addWide" class="wide-add" type="button">+ לא לשפוט</button>
       </section>
 
-      <section id="screen-form" class="screen">
+      <section id="screen-form" class="screen" aria-label="הוספה">
         <div class="panel-card">
-          <div class="form-head">
+          <div class="panel-head">
             <h2 id="formTitle">הוספת הזמנה</h2>
-            <button id="cancelEdit" class="small-btn" type="button" hidden>ביטול</button>
+            <button id="cancelEdit" class="ghost-btn" type="button" hidden>ביטול</button>
           </div>
 
           <form id="orderForm" autocomplete="off">
@@ -70,7 +68,7 @@
             <label class="field"><span>חנות</span><input id="store" type="text" placeholder="ZARA / iHerb / AliExpress" required /></label>
             <label class="field"><span>פריט</span><input id="item" type="text" placeholder="מה הזמנת הפעם?" required /></label>
             <label class="field"><span>סכום</span><input id="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="₪" required /></label>
-            <label class="field"><span>מספר הזמנה / מעקב</span><input id="tracking" type="text" placeholder="לא חובה" /></label>
+            <label class="field"><span>מספר הזמנה / מעקב</span><input id="tracking" type="text" placeholder="לא חובה, אבל מועיל" /></label>
             <label class="field"><span>הערה</span><textarea id="note" rows="2" placeholder="משהו לזכור?"></textarea></label>
 
             <fieldset class="categories">
@@ -83,32 +81,41 @@
         </div>
       </section>
 
-      <section id="screen-done" class="screen">
+      <section id="screen-done" class="screen" aria-label="הגיעו">
         <div class="panel-card history-head">
           <div class="section-title">
-            <span id="doneBadge">0</span>
-            <h2>כבר אצלי</h2>
+            <span id="doneBadge" class="section-badge">0</span>
+            <h2>הגיעו</h2>
           </div>
           <p id="doneSummary">מצאת משהו מהעבר?</p>
-          <label class="search-box">
+          <label class="search-box compact-search">
             <input id="doneSearch" type="search" placeholder="חפשי חנות, פריט או מספר הזמנה..." autocomplete="off" />
             <span>⌕</span>
           </label>
         </div>
+
         <div id="doneList" class="done-grid"></div>
+
+        <div class="data-tools panel-card">
+          <div class="data-tools-head">
+            <h3>גיבוי ושחזור</h3>
+            <p>רק כדי לישון בשקט.</p>
+          </div>
+          <div id="backupMount"></div>
+        </div>
       </section>
     </main>
 
-    <nav class="bottom-nav">
+    <nav class="bottom-nav" aria-label="ניווט">
       <button class="nav-btn active" data-screen="open" type="button"><span>⌂</span>בדרך</button>
       <button class="nav-btn nav-add" data-screen="form" type="button"><span>＋</span>הוספה</button>
-      <button class="nav-btn" data-screen="done" type="button"><span>☑</span>כבר אצלי</button>
+      <button class="nav-btn" data-screen="done" type="button"><span>☑</span>הגיעו</button>
     </nav>
   </div>
 
   <dialog id="detailsDialog" class="details-dialog">
     <div class="dialog-card">
-      <button id="closeDetails" class="dialog-close" type="button">×</button>
+      <button id="closeDetails" class="dialog-close" type="button" aria-label="סגירה">×</button>
       <div id="detailsContent"></div>
     </div>
   </dialog>

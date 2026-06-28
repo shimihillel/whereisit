@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eifo-ze-clean-rebuild-1';
+const CACHE_NAME = 'eifo-ze-v5-chic';
 const ASSETS = [
   './',
   './index.html',

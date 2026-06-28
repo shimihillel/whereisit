@@ -14,7 +14,6 @@ const categories = [
 ];
 
 let orders = loadOrders();
-let activeDetailsId = null;
 
 const els = {
   screens: {
@@ -22,6 +21,7 @@ const els = {
     form: document.getElementById('screen-form'),
     done: document.getElementById('screen-done')
   },
+  heroLine: document.getElementById('heroLine'),
   navButtons: document.querySelectorAll('.nav-btn'),
   addWide: document.getElementById('addWide'),
   openList: document.getElementById('openList'),
@@ -139,23 +139,34 @@ function renderSummary(openOrders, doneOrders) {
   const count = openOrders.length;
   const doneCount = doneOrders.length;
   const total = openOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
+
   els.openSummary.textContent = `יש לך ${count} ${count === 1 ? 'חבילה' : 'חבילות'} בדרך`;
   els.statOpen.textContent = count;
   els.statDone.textContent = doneCount;
   els.statAmount.textContent = formatCurrency(total);
   els.openBadge.textContent = count;
   els.doneBadge.textContent = doneCount;
-  els.doneSummary.textContent = doneCount ? `${doneCount} ${doneCount === 1 ? 'הזמנה הגיעה' : 'הזמנות הגיעו'} · מצאת משהו מהעבר?` : 'מצאת משהו מהעבר?';
+  els.doneSummary.textContent = doneCount ? `${doneCount} ${doneCount === 1 ? 'הזמנה הגיעה' : 'הזמנות הגיעו'} · מצאת משהו מהעבר?` : 'עוד לא הגיע כלום. זה יגיע.';
+
+  if (count === 0 && doneCount === 0) {
+    els.heroLine.textContent = 'שקט חשוד. כנראה לא הזמנת כלום עדיין.';
+  } else if (count === 0) {
+    els.heroLine.textContent = `כרגע אין שום דבר בדרך. ${doneCount} כבר אצלך.`;
+  } else if (doneCount === 0) {
+    els.heroLine.textContent = `${count} חבילות בדרך. עוד לא הגיע כלום.`;
+  } else {
+    els.heroLine.textContent = `${count} חבילות בדרך. ${doneCount} כבר אצלך.`;
+  }
 
   const moods = count === 0
-    ? ['אין כלום בדרך. חשוד מאוד.', 'היקום רגוע מדי. לא טבעי.']
-    : ['שימי, זה בדרך אלייך.', 'עוד רגע זה כאן.', 'הדואר עובד בשבילך היום.'];
+    ? ['הדואר נרגע לרגע.', 'יש שקט. חשוד מאוד.', 'כרגע אין מרדפים אחרי חבילות.']
+    : ['אחת כבר עושה סיבוב בארץ.', 'השאלה היחידה היא מתי זה מגיע.', 'ממש עוד רגע זה אצלך.'];
   els.moodLine.textContent = moods[Math.floor(Math.random() * moods.length)];
 }
 
 function renderOpenList(list) {
   if (!list.length) {
-    els.openList.innerHTML = `<div class="empty-state"><div class="empty-sticker">📭</div><h3>אין כלום בדרך</h3><p>חשוד מאוד. אבל נזרום.</p></div>`;
+    els.openList.innerHTML = `<div class="empty-state"><div class="empty-sticker">📭</div><h3>אין כרגע חבילות בדרך</h3><p>זה רגע זמני. אל תתרגלי.</p></div>`;
     return;
   }
   els.openList.innerHTML = list.map(openCardHtml).join('');
@@ -164,7 +175,7 @@ function renderOpenList(list) {
 
 function renderDoneList(list) {
   if (!list.length) {
-    els.doneList.innerHTML = `<div class="empty-state"><div class="empty-sticker">📦</div><h3>עוד לא הגיע כלום</h3><p>ברגע שחבילה תגיע, היא תעבור לכאן.</p></div>`;
+    els.doneList.innerHTML = `<div class="empty-state"><div class="empty-sticker">📦</div><h3>עוד לא הגיע כלום</h3><p>כשמשהו יגיע, הוא יעבור לכאן.</p></div>`;
     return;
   }
   els.doneList.innerHTML = list.map(doneCardHtml).join('');
@@ -188,27 +199,23 @@ function openCardHtml(order) {
   const tracking = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
   return `
     <article class="order-card open-card ${cat.bg}" data-open-details="${order.id}">
-      <div class="card-side">
-        <span class="status">בדרך</span>
-        <div class="side-meta">
-          <span class="track">${tracking}</span>
-          <span>${formatDate(order.date)}</span>
+      <div class="open-card-top">
+        <div class="price">${formatCurrency(order.amount)}</div>
+        <div class="store-wrap">
+          <h3 class="store">${escapeHtml(order.store)}</h3>
         </div>
-        <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>
       </div>
-      <div class="card-main">
-        <div class="card-top">
-          <div class="brand">${escapeHtml(shortStore(order.store))}</div>
-          <div class="text-block">
-            <h3 class="store">${escapeHtml(order.store)}</h3>
-            <p class="item">${escapeHtml(order.item)}</p>
-            <span class="price">${formatCurrency(order.amount)}</span>
-          </div>
-        </div>
-        <div class="card-footer">
-          <span class="pill ${cat.cls}">${cat.label}</span>
-          ${(order.tracking || order.note) ? `<button class="more-btn" data-action="details" data-id="${order.id}" type="button">פרטים</button>` : ''}
-        </div>
+      <p class="item">${escapeHtml(order.item)}</p>
+      <div class="meta-row">
+        <span>${formatDate(order.date)}</span>
+        <span class="meta-divider">|</span>
+        <span class="pill ${cat.cls}">${cat.label}</span>
+        <span class="meta-divider">|</span>
+        <span>${tracking}</span>
+      </div>
+      <div class="card-actions">
+        <button class="arrived-btn" data-action="arrive" data-id="${order.id}" type="button">הגיע</button>
+        <button class="more-btn" data-action="details" data-id="${order.id}" type="button">פרטים</button>
       </div>
     </article>
   `;
@@ -222,7 +229,7 @@ function doneCardHtml(order) {
       <h3 class="store">${escapeHtml(order.store)}</h3>
       <p class="item">${escapeHtml(order.item)}</p>
       <span class="price">${formatCurrency(order.amount)}</span>
-      <span class="card-footer">${formatDate(order.date)}</span>
+      <span class="meta-row">${formatDate(order.date)}</span>
       <span class="done-label">הגיע</span>
       <button class="more-btn" data-action="details" data-id="${order.id}" type="button">פרטים</button>
     </article>
@@ -350,27 +357,15 @@ function getCategory(categoryId) {
   return categories.find(cat => cat.id === categoryId) || categories[categories.length - 1];
 }
 
-function shortStore(store) {
-  const clean = String(store || '').trim();
-  if (!clean) return 'SHOP';
-  const latin = clean.replace(/[^A-Za-z0-9 ]/g, '').trim();
-  if (latin) {
-    const parts = latin.split(/\s+/).filter(Boolean);
-    if (parts.length === 1) return parts[0].slice(0, 4).toUpperCase();
-    return parts.slice(0, 2).map(part => part[0]).join('').toUpperCase();
-  }
-  return clean.slice(0, 2);
-}
-
 function formatCurrency(value) {
   const number = Number(value || 0);
-  return `₪ ${number.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`;
+  return `₪${number.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`;
 }
 
 function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(`${dateString}T00:00:00`);
-  return date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return date.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: '2-digit' });
 }
 
 function escapeHtml(value) {
@@ -408,14 +403,17 @@ function showToast(message) {
 function injectBackupUI() {
   const panel = document.createElement('div');
   panel.className = 'backup-panel';
+
   const exportBtn = document.createElement('button');
   exportBtn.type = 'button';
   exportBtn.className = 'backup-export';
   exportBtn.textContent = 'הורידי גיבוי';
+
   const importBtn = document.createElement('button');
   importBtn.type = 'button';
   importBtn.className = 'backup-import';
   importBtn.textContent = 'שחזרי מגיבוי';
+
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
   fileInput.accept = 'application/json,.json';
@@ -429,7 +427,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'clean-rebuild',
+      version: 'v5-chic',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
