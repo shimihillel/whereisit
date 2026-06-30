@@ -107,7 +107,12 @@ function onSubmitForm(event) {
       updatedAt: new Date().toISOString(),
       ...payload
     });
-    showToast('נכנס למעקב. לא שופטת.');
+    showToast(randomLine([
+      'נכנס למעקב. לא שופטת.',
+      'נרשם. לא שאלנו שאלות.',
+      'החבילה בדרך, המצפון בטיפול.',
+      'בסדר, זה היה נחוץ רגשית.'
+    ]));
   }
 
   saveOrders();
@@ -159,8 +164,8 @@ function renderSummary(openOrders, doneOrders) {
     : `${count} חבילות בדרך. ${count === 1 ? 'אחת' : count === 2 ? 'אחת לפחות' : 'אחת'} כנראה כבר עושה סיבוב בארץ.`;
 
   const moods = count === 0
-    ? ['האשראי נושם לרווחה בינתיים.', 'שקט חריג בגזרת החבילות.', 'רגע של חסד.']
-    : ['האשראי לא מגיב כרגע.', 'עוד רגע זה אצלך.', 'הדואר שוב במרדף.'];
+    ? ['האשראי נושם לרווחה בינתיים.', 'שקט חריג בגזרת החבילות.', 'רגע של חסד.', 'אין חבילות בדרך. מוזר, אבל נעים.']
+    : ['האשראי לא מגיב כרגע.', 'עוד רגע זה אצלך.', 'הדואר שוב במרדף.', 'יש דברים בדרך, ויש תקווה.'];
   els.moodLine.textContent = moods[Math.floor(Math.random() * moods.length)];
 
   els.doneSummary.textContent = doneCount === 0
@@ -173,8 +178,8 @@ function renderOpenList(list) {
     els.openList.innerHTML = `
       <div class="empty-state">
         <div class="empty-emoji">📭</div>
-        <h3>אין כרגע חבילות פעילות</h3>
-        <p>זה ייראה הרבה יותר מרגש אחרי ההזמנה הבאה.</p>
+        <h3>אין כרגע חבילות בדרך</h3>
+        <p>שקט חשוד. אבל אנחנו לא שופטות גם שקט.</p>
       </div>
     `;
     return;
@@ -189,8 +194,8 @@ function renderDoneList(list) {
     els.doneList.innerHTML = `
       <div class="empty-state" style="grid-column:1/-1;">
         <div class="empty-emoji">📦</div>
-        <h3>עוד לא הגיע כלום</h3>
-        <p>ברגע שמשהו יגיע, הוא יעבור לכאן.</p>
+        <h3>עוד לא נחת פה כלום</h3>
+        <p>כשהחבילה הראשונה תגיע, הארכיון יתחיל להתמלא.</p>
       </div>
     `;
     return;
@@ -269,7 +274,12 @@ function markArrived(id) {
   saveOrders();
   render();
   closeDetails();
-  showToast('הגיעה. איזה רגע.');
+  showToast(randomLine([
+    'הגיעה. איזה רגע.',
+    'נחתה אצלך. ניצחון קטן.',
+    'הגיעה! אפשר להפסיק לרענן.',
+    'סומן כהגיע. הדרמה הסתיימה.'
+  ]));
 }
 
 function restoreToOpen(id) {
@@ -413,6 +423,10 @@ function copyTracking(id) {
   if (!order || !order.tracking) return;
   navigator.clipboard?.writeText(order.tracking);
   showToast('הועתק.');
+}
+
+function randomLine(lines) {
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 function showToast(message) {
