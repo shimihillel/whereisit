@@ -38,9 +38,29 @@
       </label>
 
       <section class="orders-section">
-        <div class="section-title-row">
-          <h2>הזמנות פעילות</h2>
-          <span id="openCountBadge" class="count-badge">0</span>
+        <div class="section-title-row with-sort">
+          <div class="section-title-main">
+            <h2>הזמנות פעילות</h2>
+            <span id="openCountBadge" class="count-badge">0</span>
+          </div>
+
+          <div class="list-controls">
+            <label class="sort-control">
+              <span>מיון</span>
+              <select id="openSort">
+                <option value="newest">חדש קודם</option>
+                <option value="oldest">ישן קודם</option>
+                <option value="amountHigh">סכום גבוה</option>
+                <option value="amountLow">סכום נמוך</option>
+                <option value="store">לפי חנות</option>
+              </select>
+            </label>
+
+            <label class="sort-control category-filter">
+              <span>קטגוריה</span>
+              <select id="openCategoryFilter"></select>
+            </label>
+          </div>
         </div>
         <div id="openList" class="open-list"></div>
       </section>
@@ -112,9 +132,29 @@
         <input id="doneSearch" type="search" placeholder="חפשי חנות, פריט או מספר הזמנה..." autocomplete="off" />
       </label>
 
-      <div class="section-title-row done-title-row">
-        <h2>כבר אצלי</h2>
-        <span id="doneCountBadge" class="count-badge">0</span>
+      <div class="section-title-row done-title-row with-sort">
+        <div class="section-title-main">
+          <h2>כבר אצלי</h2>
+          <span id="doneCountBadge" class="count-badge">0</span>
+        </div>
+
+        <div class="list-controls">
+          <label class="sort-control">
+            <span>מיון</span>
+            <select id="doneSort">
+              <option value="arrivedRecent">הגיעו לאחרונה</option>
+              <option value="oldest">הזמנות ישנות</option>
+              <option value="amountHigh">סכום גבוה</option>
+              <option value="amountLow">סכום נמוך</option>
+              <option value="store">לפי חנות</option>
+            </select>
+          </label>
+
+          <label class="sort-control category-filter">
+            <span>קטגוריה</span>
+            <select id="doneCategoryFilter"></select>
+          </label>
+        </div>
       </div>
       <div id="doneList" class="done-grid"></div>
 

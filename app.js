@@ -1,5 +1,9 @@
 
 const STORAGE_KEY = 'eifo-ze-orders-v1';
+const SORT_STORAGE_KEY = 'eifo-ze-open-sort-v1';
+const DONE_SORT_STORAGE_KEY = 'eifo-ze-done-sort-v1';
+const OPEN_CATEGORY_FILTER_STORAGE_KEY = 'eifo-ze-open-category-filter-v1';
+const DONE_CATEGORY_FILTER_STORAGE_KEY = 'eifo-ze-done-category-filter-v1';
 
 const categories = [
   { id: 'clothes', label: 'בגדים', color: 'var(--cat-clothes)' },
@@ -26,7 +30,11 @@ const els = {
   openSummary: document.getElementById('openSummary'),
   moodLine: document.getElementById('moodLine'),
   openSearch: document.getElementById('openSearch'),
+  openSort: document.getElementById('openSort'),
+  openCategoryFilter: document.getElementById('openCategoryFilter'),
   doneSearch: document.getElementById('doneSearch'),
+  doneSort: document.getElementById('doneSort'),
+  doneCategoryFilter: document.getElementById('doneCategoryFilter'),
   openList: document.getElementById('openList'),
   doneList: document.getElementById('doneList'),
   openCountBadge: document.getElementById('openCountBadge'),
@@ -55,6 +63,7 @@ init();
 
 function init() {
   buildCategoryChips();
+  buildCategoryFilters();
   setTodayIfEmpty();
   injectBackupUI();
   bindEvents();
@@ -65,7 +74,26 @@ function bindEvents() {
   els.navButtons.forEach(btn => btn.addEventListener('click', () => showScreen(btn.dataset.screen)));
   els.quickAddBtn.addEventListener('click', () => { resetForm(); showScreen('form'); });
   els.openSearch.addEventListener('input', render);
+  els.openSort.value = localStorage.getItem(SORT_STORAGE_KEY) || 'newest';
+  els.openSort.addEventListener('change', () => {
+    localStorage.setItem(SORT_STORAGE_KEY, els.openSort.value);
+    render();
+  });
+  els.openCategoryFilter.addEventListener('change', () => {
+    localStorage.setItem(OPEN_CATEGORY_FILTER_STORAGE_KEY, els.openCategoryFilter.value);
+    render();
+  });
+
   els.doneSearch.addEventListener('input', render);
+  els.doneSort.value = localStorage.getItem(DONE_SORT_STORAGE_KEY) || 'arrivedRecent';
+  els.doneSort.addEventListener('change', () => {
+    localStorage.setItem(DONE_SORT_STORAGE_KEY, els.doneSort.value);
+    render();
+  });
+  els.doneCategoryFilter.addEventListener('change', () => {
+    localStorage.setItem(DONE_CATEGORY_FILTER_STORAGE_KEY, els.doneCategoryFilter.value);
+    render();
+  });
   els.form.addEventListener('submit', onSubmitForm);
   els.cancelEdit.addEventListener('click', () => { resetForm(); showScreen('open'); });
   els.closeDetails.addEventListener('click', closeDetails);
@@ -81,6 +109,19 @@ function buildCategoryChips() {
       <span class="category-chip" style="background:${category.color};">${category.label}</span>
     </label>
   `).join('');
+}
+
+function buildCategoryFilters() {
+  const options = [
+    '<option value="all">הכל</option>',
+    ...categories.map(category => `<option value="${category.id}">${category.label}</option>`)
+  ].join('');
+
+  els.openCategoryFilter.innerHTML = options;
+  els.doneCategoryFilter.innerHTML = options;
+
+  els.openCategoryFilter.value = localStorage.getItem(OPEN_CATEGORY_FILTER_STORAGE_KEY) || 'all';
+  els.doneCategoryFilter.value = localStorage.getItem(DONE_CATEGORY_FILTER_STORAGE_KEY) || 'all';
 }
 
 function showScreen(screenName) {
@@ -141,10 +182,10 @@ function collectFormValues() {
 }
 
 function render() {
-  const openOrders = orders.filter(order => order.status === 'open').sort(sortByDateDesc);
-  const doneOrders = orders.filter(order => order.status === 'done').sort((a, b) => new Date(b.arrivedAt || b.updatedAt || b.date) - new Date(a.arrivedAt || a.updatedAt || a.date));
-  const visibleOpenOrders = filterOrders(openOrders, els.openSearch.value);
-  const visibleDoneOrders = filterOrders(doneOrders, els.doneSearch.value);
+  const openOrders = sortOpenOrders(orders.filter(order => order.status === 'open'));
+  const doneOrders = sortDoneOrders(orders.filter(order => order.status === 'done'));
+  const visibleOpenOrders = filterByCategory(filterOrders(openOrders, els.openSearch.value), els.openCategoryFilter.value);
+  const visibleDoneOrders = filterByCategory(filterOrders(doneOrders, els.doneSearch.value), els.doneCategoryFilter.value);
 
   renderSummary(openOrders, doneOrders);
   renderOpenList(visibleOpenOrders);
@@ -179,7 +220,7 @@ function renderOpenList(list) {
       <div class="empty-state">
         <div class="empty-emoji">📭</div>
         <h3>אין כרגע חבילות בדרך</h3>
-        <p>שקט חשוד. אבל אנחנו לא שופטות גם שקט.</p>
+        <p>או שאין חבילות, או שהסינון ממש ספציפי. דרמטי בכל מקרה.</p>
       </div>
     `;
     return;
@@ -195,7 +236,7 @@ function renderDoneList(list) {
       <div class="empty-state" style="grid-column:1/-1;">
         <div class="empty-emoji">📦</div>
         <h3>עוד לא נחת פה כלום</h3>
-        <p>כשהחבילה הראשונה תגיע, הארכיון יתחיל להתמלא.</p>
+        <p>או שעוד לא הגיע כלום, או שהקטגוריה הזו עדיין נקייה מדי.</p>
       </div>
     `;
     return;
@@ -378,6 +419,57 @@ function filterOrders(list, query) {
     const categoryLabel = getCategory(order.category).label;
     return [order.store, order.item, order.tracking, order.note, categoryLabel].some(value => String(value || '').toLowerCase().includes(q));
   });
+}
+
+function sortDoneOrders(list) {
+  const sortMode = els.doneSort ? els.doneSort.value : 'arrivedRecent';
+  const sorted = [...list];
+
+  if (sortMode === 'oldest') {
+    return sorted.sort((a, b) => new Date(a.date || a.createdAt || 0) - new Date(b.date || b.createdAt || 0));
+  }
+
+  if (sortMode === 'amountHigh') {
+    return sorted.sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0));
+  }
+
+  if (sortMode === 'amountLow') {
+    return sorted.sort((a, b) => Number(a.amount || 0) - Number(b.amount || 0));
+  }
+
+  if (sortMode === 'store') {
+    return sorted.sort((a, b) => String(a.store || '').localeCompare(String(b.store || ''), 'he'));
+  }
+
+  return sorted.sort((a, b) => new Date(b.arrivedAt || b.updatedAt || b.date || 0) - new Date(a.arrivedAt || a.updatedAt || a.date || 0));
+}
+
+function filterByCategory(list, categoryId) {
+  if (!categoryId || categoryId === 'all') return list;
+  return list.filter(order => (order.category || 'other') === categoryId);
+}
+
+function sortOpenOrders(list) {
+  const sortMode = els.openSort ? els.openSort.value : 'newest';
+  const sorted = [...list];
+
+  if (sortMode === 'oldest') {
+    return sorted.sort((a, b) => new Date(a.date || a.createdAt || 0) - new Date(b.date || b.createdAt || 0));
+  }
+
+  if (sortMode === 'amountHigh') {
+    return sorted.sort((a, b) => Number(b.amount || 0) - Number(a.amount || 0));
+  }
+
+  if (sortMode === 'amountLow') {
+    return sorted.sort((a, b) => Number(a.amount || 0) - Number(b.amount || 0));
+  }
+
+  if (sortMode === 'store') {
+    return sorted.sort((a, b) => String(a.store || '').localeCompare(String(b.store || ''), 'he'));
+  }
+
+  return sorted.sort(sortByDateDesc);
 }
 
 function sortByDateDesc(a, b) {
