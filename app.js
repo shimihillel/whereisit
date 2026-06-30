@@ -53,6 +53,11 @@ const els = {
   note: document.getElementById('note'),
   categoryChips: document.getElementById('categoryChips'),
   doneSummary: document.getElementById('doneSummary'),
+  monthDoneCount: document.getElementById('monthDoneCount'),
+  monthDoneAmount: document.getElementById('monthDoneAmount'),
+  monthTopCategory: document.getElementById('monthTopCategory'),
+  suspiciousStore: document.getElementById('suspiciousStore'),
+  funLine: document.getElementById('funLine'),
   backupMount: document.getElementById('backupMount'),
   detailsDialog: document.getElementById('detailsDialog'),
   detailsContent: document.getElementById('detailsContent'),
@@ -152,7 +157,9 @@ function onSubmitForm(event) {
       'נכנס למעקב. לא שופטת.',
       'נרשם. לא שאלנו שאלות.',
       'החבילה בדרך, המצפון בטיפול.',
-      'בסדר, זה היה נחוץ רגשית.'
+      'בסדר, זה היה נחוץ רגשית.',
+      'נוסף לתיק החקירה.',
+      'עוד פריט נכנס לעלילה.'
     ]));
   }
 
@@ -188,6 +195,7 @@ function render() {
   const visibleDoneOrders = filterByCategory(filterOrders(doneOrders, els.doneSearch.value), els.doneCategoryFilter.value);
 
   renderSummary(openOrders, doneOrders);
+  renderMonthlyFun(doneOrders);
   renderOpenList(visibleOpenOrders);
   renderDoneList(visibleDoneOrders);
 }
@@ -212,6 +220,97 @@ function renderSummary(openOrders, doneOrders) {
   els.doneSummary.textContent = doneCount === 0
     ? 'כאן כל מה שכבר נחת אצלך.'
     : `${doneCount} פריטים כבר הגיעו ונשמרו כאן.`;
+}
+
+function renderMonthlyFun(doneOrders) {
+  if (!els.monthDoneCount) return;
+
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const monthOrders = doneOrders.filter(order => {
+    const baseDate = order.arrivedAt || order.updatedAt || order.date;
+    if (!baseDate) return false;
+    const date = new Date(baseDate);
+    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+  });
+
+  const total = monthOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
+  const topStore = getTopValue(monthOrders, order => normalizeName(order.store));
+  const topCategoryId = getTopValue(monthOrders, order => order.category || 'other');
+  const topCategory = topCategoryId ? getCategory(topCategoryId).label : '—';
+
+  els.monthDoneCount.textContent = monthOrders.length;
+  els.monthDoneAmount.textContent = formatCurrency(total);
+  els.monthTopCategory.textContent = topCategory;
+  els.suspiciousStore.textContent = topStore || 'אין חשודות';
+
+  els.funLine.textContent = buildFunLine(monthOrders.length, total, topStore, topCategory);
+}
+
+function getTopValue(list, mapper) {
+  const counts = new Map();
+  list.forEach(item => {
+    const value = mapper(item);
+    if (!value) return;
+    counts.set(value, (counts.get(value) || 0) + 1);
+  });
+
+  let topValue = '';
+  let topCount = 0;
+  counts.forEach((count, value) => {
+    if (count > topCount) {
+      topValue = value;
+      topCount = count;
+    }
+  });
+
+  return topValue;
+}
+
+function normalizeName(value) {
+  return String(value || '').trim();
+}
+
+function buildFunLine(count, total, topStore, topCategory) {
+  if (count === 0) {
+    return randomLine([
+      'החודש עוד אין ראיות. שקט חשוד.',
+      'אין עדיין חבילות שהגיעו החודש. הארכיון מחכה.',
+      'החודש נקי בינתיים. לא ברור אם זה טוב או מדאיג.'
+    ]);
+  }
+
+  if (count === 1) {
+    return randomLine([
+      'חבילה אחת נחתה החודש. פתיחה רגועה יחסית.',
+      'יש ראיה אחת בתיק. ממש התחלה של חקירה.',
+      'רק חבילה אחת החודש. האשראי כמעט מאמין לך.'
+    ]);
+  }
+
+  if (topStore && count >= 3) {
+    return randomLine([
+      `${topStore} מתחילה להיראות כמו דמות חוזרת בעלילה.`,
+      `החנות החשודה היא ${topStore}. לא מאשימות, רק מתעדות.`,
+      `${topStore} מככבת החודש. מעניין מאוד.`
+    ]);
+  }
+
+  if (total >= 1000) {
+    return randomLine([
+      'הסכום החודשי כבר מבקש כוס מים.',
+      'זה חודש עם נוכחות. האשראי כנראה הרגיש.',
+      'החבילות הגיעו, והסכום בא איתן.'
+    ]);
+  }
+
+  return randomLine([
+    `${count} חבילות הגיעו החודש. סביר, אלגנטי, מתועד.`,
+    `הקטגוריה הבולטת: ${topCategory}. יש פה דפוס.`,
+    'החודש פעיל, אבל עדיין בגבולות הנחמד.'
+  ]);
 }
 
 function renderOpenList(list) {
@@ -319,7 +418,9 @@ function markArrived(id) {
     'הגיעה. איזה רגע.',
     'נחתה אצלך. ניצחון קטן.',
     'הגיעה! אפשר להפסיק לרענן.',
-    'סומן כהגיע. הדרמה הסתיימה.'
+    'סומן כהגיע. הדרמה הסתיימה.',
+    'הועבר לארכיון הניצחונות הקטנים.',
+    'עוד תיק נסגר בהצלחה.'
   ]));
 }
 
