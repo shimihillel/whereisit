@@ -3,25 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#faf6f1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="איפה זה?!" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>איפה זה?!</title>
-  <link rel="manifest" href="manifest.json?v=20" />
-  <link rel="stylesheet" href="style.css?v=20" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20" />
-  <link rel="icon" type="image/png" href="favicon.png?v=20" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" href="favicon.png" />
 </head>
 <body>
   <div class="app-shell">
     <section id="screen-open" class="screen active" aria-label="בדרך">
       <header class="hero">
-        <div class="mock-topbar" aria-hidden="true">
-          <span class="mock-icon mock-bell">♧</span>
-          <span class="mock-icon mock-box">□</span>
-        </div>
-        <h1><span class="title-accent">?!</span><span>איפה זה</span></h1>
+        <h1>איפה זה?!</h1>
         <p id="heroSubtitle">0 חבילות בדרך. עכשיו ממש רגוע.</p>
       </header>
 
@@ -69,6 +65,7 @@
         <div id="openList" class="open-list"></div>
       </section>
 
+      <button id="quickAddBtn" class="wide-primary-btn" type="button">+ לא לשפוט</button>
     </section>
 
     <section id="screen-form" class="screen" aria-label="הוספה">
@@ -213,14 +210,16 @@
       </section>
     </section>
 
-    <button id="quickAddBtn" class="fab-add" type="button" aria-label="הוספת הזמנה">+</button>
-
     <nav class="bottom-nav" aria-label="ניווט">
-      <button class="nav-btn active nav-open" data-screen="open" type="button">
-        <span class="nav-icon">▣</span>
+      <button class="nav-btn active" data-screen="open" type="button">
+        <span class="nav-icon">⌂</span>
         <span class="nav-label">בדרך</span>
       </button>
-      <button class="nav-btn nav-done" data-screen="done" type="button">
+      <button class="nav-btn nav-add" data-screen="form" type="button">
+        <span class="nav-icon">＋</span>
+        <span class="nav-label">הוספה</span>
+      </button>
+      <button class="nav-btn" data-screen="done" type="button">
         <span class="nav-icon">☑</span>
         <span class="nav-label">הגיעו</span>
       </button>
@@ -234,6 +233,6 @@
     </div>
   </dialog>
 
-  <script src="app.js?v=20"></script>
+  <script src="app.js"></script>
 </body>
 </html>

@@ -141,9 +141,6 @@ function showScreen(screenName) {
     screen.classList.toggle('active', key === screenName);
   });
   els.navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenName));
-  if (els.quickAddBtn) {
-    els.quickAddBtn.classList.toggle('is-hidden', screenName === 'form');
-  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -781,7 +778,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v20-stable-mockup',
+      version: 'v14-simple-arrive',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
