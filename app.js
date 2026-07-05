@@ -425,37 +425,55 @@ function openCardTemplate(order) {
   const trackingText = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
   const imageThumb = order.imageData
     ? `<div class="order-thumb-wrap"><img class="order-thumb" src="${order.imageData}" alt="" /></div>`
-    : '';
+    : `<div class="order-thumb-wrap placeholder">📦</div>`;
   return `
-    <article class="order-card open-card" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
-      <div class="order-body ${order.imageData ? 'has-image' : ''}">
+    <article class="order-card open-card" data-open-details="${order.id}" style="--pill-color:${category.color};">
+      <div class="order-body">
+        ${imageThumb}
         <div class="order-text">
           <div class="order-top">
             <div class="order-store-block">
               <h3 class="order-store">${escapeHtml(order.store)}</h3>
+              <p class="order-item">${escapeHtml(order.item)}</p>
             </div>
             <div class="order-price">${formatCurrency(order.amount)}</div>
           </div>
-          <p class="order-item">${escapeHtml(order.item)}</p>
           <div class="order-meta">
-            <span>${formatDate(order.date)}</span>
-            <span class="order-meta-sep">|</span>
             <span class="cat-pill">${category.label}</span>
             <span class="order-meta-sep">|</span>
-            <span>${trackingText}</span>
+            <span>${formatDate(order.date)}</span>
           </div>
+          <div class="order-tracking">${trackingText}</div>
         </div>
-        ${imageThumb}
       </div>
       <div class="order-actions">
-        <button class="arrived-btn" type="button" data-action="arrive" data-id="${order.id}">הגיע</button>
-        <button class="text-link-btn" type="button" data-action="details" data-id="${order.id}">פרטים <span>›</span></button>
+        <button class="text-link-btn" type="button" data-action="details" data-id="${order.id}">‹ פרטים</button>
+        <button class="arrived-btn" type="button" data-action="arrive" data-id="${order.id}">הגיע ✓</button>
       </div>
     </article>
   `;
 }
 
 function doneCardTemplate(order) {
+  const category = getCategory(order.category);
+  const imageThumb = order.imageData
+    ? `<img class="done-thumb" src="${order.imageData}" alt="" />`
+    : `<div class="done-thumb" style="display:grid;place-items:center;color:#c4c0d2;font-size:1.9rem;">📦</div>`;
+  return `
+    <article class="order-card done-card" data-open-details="${order.id}" style="--pill-color:${category.color};">
+      <span class="cat-pill">${category.label}</span>
+      ${imageThumb}
+      <h3 class="order-store">${escapeHtml(order.store)}</h3>
+      <p class="order-item">${escapeHtml(order.item)}</p>
+      <span class="order-price">${formatCurrency(order.amount)}</span>
+      <span class="order-meta">${formatDate(order.date)}</span>
+      <span class="done-label">הגיע</span>
+      <button class="text-link-btn" type="button" data-action="details" data-id="${order.id}">‹ פרטים</button>
+    </article>
+  `;
+}
+
+function bindCardActions(order) {
   const category = getCategory(order.category);
   const imageThumb = order.imageData
     ? `<img class="done-thumb" src="${order.imageData}" alt="" />`
@@ -781,7 +799,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v18-mockup-rebuild',
+      version: 'v19-mockup-from-scratch',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
