@@ -8,92 +8,125 @@
   <meta name="apple-mobile-web-app-title" content="איפה זה?!" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>איפה זה?!</title>
-  <link rel="manifest" href="manifest.json?v=19" />
-  <link rel="stylesheet" href="style.css?v=19" />
-  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=19" />
-  <link rel="icon" type="image/png" href="favicon.png?v=19" />
+  <link rel="manifest" href="manifest.json?v=20" />
+  <link rel="stylesheet" href="style.css?v=20" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png?v=20" />
+  <link rel="icon" type="image/png" href="favicon.png?v=20" />
 </head>
 <body>
   <div class="app-shell">
     <section id="screen-open" class="screen active" aria-label="בדרך">
-      <header class="hero hero-open">
-        <div class="topbar">
-          <button class="toolbar-btn" type="button" aria-label="התראות">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.75a4 4 0 0 0-4 4v1.18c0 .8-.24 1.58-.7 2.24L6 14.25h12l-1.3-2.08A4.24 4.24 0 0 1 16 9.93V8.75a4 4 0 0 0-4-4Zm0 16a2.22 2.22 0 0 1-2.1-1.5h4.2a2.22 2.22 0 0 1-2.1 1.5ZM4.9 15.75a.75.75 0 0 1-.64-1.14l1.79-2.86c.3-.47.45-1 .45-1.56V8.75a5.5 5.5 0 1 1 11 0v1.44c0 .56.15 1.09.45 1.56l1.79 2.86a.75.75 0 0 1-.64 1.14H4.9Z"/></svg>
-          </button>
-          <button class="toolbar-btn" type="button" aria-label="חבילה">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.85 4.8 6.1v11.73L12 21.15l7.2-3.32V6.1L12 2.85Zm5.7 4.22-1.84.85-7.02-3.08 3.16-1.42 5.7 2.65ZM12 11.38 6.2 8.74l5.8-2.65 5.8 2.65L12 11.38Zm-6 6.45V9.92l5.25 2.39v7.05L6 17.83Zm6.75 1.53v-7.05L18 9.92v7.9l-5.25 1.54Z"/></svg>
-          </button>
+      <header class="hero">
+        <div class="mock-topbar" aria-hidden="true">
+          <span class="mock-icon mock-bell">♧</span>
+          <span class="mock-icon mock-box">□</span>
         </div>
-        <h1><span class="mark">?!</span><span class="word">איפה זה</span></h1>
+        <h1><span class="title-accent">?!</span><span>איפה זה</span></h1>
+        <p id="heroSubtitle">0 חבילות בדרך. עכשיו ממש רגוע.</p>
       </header>
 
       <section class="summary-card">
+        <div class="summary-illustration" aria-hidden="true">
+          <img src="icon-192.png" alt="" />
+        </div>
         <div class="summary-copy">
           <div class="summary-kicker">בדרך עכשיו</div>
           <div id="openSummary" class="summary-main">0 חבילות · ₪0</div>
-          <div id="moodLine" class="summary-mood">שקט חריג בגזרת החבילות.</div>
-        </div>
-        <div class="summary-illustration" aria-hidden="true">
-          <img src="icon-192.png?v=19" alt="" />
+          <div id="moodLine" class="summary-mood">האשראי נושם לרווחה בינתיים.</div>
         </div>
       </section>
 
       <label class="search-field">
-        <span class="search-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4.75a5.75 5.75 0 1 0 0 11.5 5.75 5.75 0 0 0 0-11.5Zm0 13a7.25 7.25 0 1 1 5.03-12.47 7.25 7.25 0 0 1-5.03 12.47Zm9.97 1.91-4.18-4.18 1.06-1.06 4.18 4.18a.75.75 0 1 1-1.06 1.06Z"/></svg>
-        </span>
+        <span class="search-icon">⌕</span>
         <input id="openSearch" type="search" placeholder="חפשי חנות, פריט או מספר הזמנה..." autocomplete="off" />
       </label>
 
       <section class="orders-section">
         <div class="section-title-row with-sort">
           <div class="section-title-main">
-            <span id="openCountBadge" class="count-badge">0</span>
             <h2>הזמנות פעילות</h2>
+            <span id="openCountBadge" class="count-badge">0</span>
           </div>
+
           <div class="list-controls">
-            <label class="sort-control category-filter">
-              <select id="openCategoryFilter"></select>
-            </label>
             <label class="sort-control">
+              <span>מיון</span>
               <select id="openSort">
-                <option value="newest">מיון: חדש קודם</option>
-                <option value="oldest">מיון: ישן קודם</option>
-                <option value="amountHigh">מיון: סכום גבוה</option>
-                <option value="amountLow">מיון: סכום נמוך</option>
-                <option value="store">מיון: לפי חנות</option>
+                <option value="newest">חדש קודם</option>
+                <option value="oldest">ישן קודם</option>
+                <option value="amountHigh">סכום גבוה</option>
+                <option value="amountLow">סכום נמוך</option>
+                <option value="store">לפי חנות</option>
               </select>
+            </label>
+
+            <label class="sort-control category-filter">
+              <span>קטגוריה</span>
+              <select id="openCategoryFilter"></select>
             </label>
           </div>
         </div>
         <div id="openList" class="open-list"></div>
       </section>
+
     </section>
 
     <section id="screen-form" class="screen" aria-label="הוספה">
       <header class="sub-header">
         <h2 id="formTitle">הוספת הזמנה</h2>
-        <p>נרשום אותה יפה, כדי שלא תלך לאיבוד.</p>
+        <p>רק כדי שלא תשכחי מה הזמנת עכשיו.</p>
       </header>
+
       <section class="form-card">
         <form id="orderForm" autocomplete="off">
           <input type="hidden" id="editingId" />
-          <label class="field"><span>תאריך הזמנה</span><input id="date" type="date" required /></label>
-          <label class="field"><span>חנות</span><input id="store" type="text" placeholder="ZARA / iHerb / AliExpress" required /></label>
-          <label class="field"><span>פריט</span><input id="item" type="text" placeholder="מה הזמנת?" required /></label>
-          <label class="field"><span>סכום</span><input id="amount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="₪" required /></label>
-          <label class="field"><span>מספר הזמנה / מעקב</span><input id="tracking" type="text" placeholder="לא חובה" /></label>
-          <label class="field"><span>הערה</span><textarea id="note" rows="3" placeholder="משהו שכדאי לזכור?"></textarea></label>
-          <label class="field"><span>תמונה / צילום מסך</span><input id="photo" type="file" accept="image/*" /><small class="field-hint">אפשר לצרף תמונה אחת, והיא נשמרת מוקטן.</small></label>
+
+          <label class="field">
+            <span>תאריך הזמנה</span>
+            <input id="date" type="date" required />
+          </label>
+
+          <label class="field">
+            <span>חנות</span>
+            <input id="store" type="text" placeholder="ZARA / iHerb / AliExpress" required />
+          </label>
+
+          <label class="field">
+            <span>פריט</span>
+            <input id="item" type="text" placeholder="מה הזמנת?" required />
+          </label>
+
+          <label class="field">
+            <span>סכום</span>
+            <input id="amount" type="number" min="0" step="0.01" inputmode="decimal" placeholder="₪" required />
+          </label>
+
+          <label class="field">
+            <span>מספר הזמנה / מעקב</span>
+            <input id="tracking" type="text" placeholder="לא חובה" />
+          </label>
+
+          <label class="field">
+            <span>הערה</span>
+            <textarea id="note" rows="3" placeholder="משהו שכדאי לזכור?"></textarea>
+          </label>
+
+          <label class="field">
+            <span>תמונה / צילום מסך</span>
+            <input id="photo" type="file" accept="image/*" />
+            <small class="field-hint">אפשר לצרף תמונה אחת. נשמר מוקטן כדי לא להכביד על האפליקציה.</small>
+          </label>
+
           <div id="imagePreviewWrap" class="image-preview-wrap" hidden>
             <img id="imagePreview" class="image-preview" alt="תצוגה מקדימה של ההזמנה" />
             <button id="removeImageBtn" class="remove-image-btn" type="button">הסירי תמונה</button>
           </div>
+
           <fieldset class="category-area">
             <legend>קטגוריה</legend>
             <div id="categoryChips" class="category-grid"></div>
           </fieldset>
+
           <div class="form-actions">
             <button id="cancelEdit" class="ghost-btn" type="button" hidden>ביטול</button>
             <button class="primary-btn" type="submit">שמרי לי</button>
@@ -107,6 +140,7 @@
         <h2>הגיעו</h2>
         <p id="doneSummary">כאן כל מה שכבר נחת אצלך.</p>
       </header>
+
       <section class="fun-card" aria-label="סטטיסטיקות חודשיות">
         <div class="fun-card-head">
           <div>
@@ -115,43 +149,65 @@
           </div>
           <span class="fun-badge">FUN</span>
         </div>
+
         <div class="fun-stats">
-          <div><b id="monthDoneCount">0</b><span>הגיעו</span></div>
-          <div><b id="monthDoneAmount">₪0</b><span>סה״כ</span></div>
-          <div><b id="monthTopCategory">—</b><span>קטגוריה</span></div>
+          <div>
+            <b id="monthDoneCount">0</b>
+            <span>הגיעו</span>
+          </div>
+          <div>
+            <b id="monthDoneAmount">₪0</b>
+            <span>סה״כ</span>
+          </div>
+          <div>
+            <b id="monthTopCategory">—</b>
+            <span>קטגוריה</span>
+          </div>
         </div>
-        <div class="suspicious-shop"><span>החנות החשודה של החודש</span><b id="suspiciousStore">—</b></div>
+
+        <div class="suspicious-shop">
+          <span>החנות החשודה של החודש</span>
+          <b id="suspiciousStore">—</b>
+        </div>
+
         <p id="funLine" class="fun-line">מחכה לראיות.</p>
       </section>
+
       <label class="search-field compact-search">
-        <span class="search-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4.75a5.75 5.75 0 1 0 0 11.5 5.75 5.75 0 0 0 0-11.5Zm0 13a7.25 7.25 0 1 1 5.03-12.47 7.25 7.25 0 0 1-5.03 12.47Zm9.97 1.91-4.18-4.18 1.06-1.06 4.18 4.18a.75.75 0 1 1-1.06 1.06Z"/></svg>
-        </span>
+        <span class="search-icon">⌕</span>
         <input id="doneSearch" type="search" placeholder="חפשי חנות, פריט או מספר הזמנה..." autocomplete="off" />
       </label>
+
       <div class="section-title-row done-title-row with-sort">
         <div class="section-title-main">
-          <span id="doneCountBadge" class="count-badge">0</span>
           <h2>כבר אצלי</h2>
+          <span id="doneCountBadge" class="count-badge">0</span>
         </div>
+
         <div class="list-controls">
-          <label class="sort-control category-filter"><select id="doneCategoryFilter"></select></label>
           <label class="sort-control">
+            <span>מיון</span>
             <select id="doneSort">
-              <option value="arrivedRecent">מיון: הגיעו לאחרונה</option>
-              <option value="oldest">מיון: ישנות</option>
-              <option value="amountHigh">מיון: סכום גבוה</option>
-              <option value="amountLow">מיון: סכום נמוך</option>
-              <option value="store">מיון: לפי חנות</option>
+              <option value="arrivedRecent">הגיעו לאחרונה</option>
+              <option value="oldest">הזמנות ישנות</option>
+              <option value="amountHigh">סכום גבוה</option>
+              <option value="amountLow">סכום נמוך</option>
+              <option value="store">לפי חנות</option>
             </select>
+          </label>
+
+          <label class="sort-control category-filter">
+            <span>קטגוריה</span>
+            <select id="doneCategoryFilter"></select>
           </label>
         </div>
       </div>
       <div id="doneList" class="done-grid"></div>
+
       <section class="tools-card">
         <div class="tools-head">
           <h3>גיבוי ושחזור</h3>
-          <p>רק ליתר ביטחון, כדי שהכול יישמר.</p>
+          <p>שקט בצד, רק למקרה שהאייפון שוב מחליט להיות אייפון.</p>
         </div>
         <div id="backupMount"></div>
       </section>
@@ -160,17 +216,13 @@
     <button id="quickAddBtn" class="fab-add" type="button" aria-label="הוספת הזמנה">+</button>
 
     <nav class="bottom-nav" aria-label="ניווט">
-      <button class="nav-btn" data-screen="done" type="button">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.25 12.6 7.1 10.46l-1.06 1.06 3.21 3.2 8.01-8-1.06-1.07-6.94 6.95Z"/><path d="M19.25 3.75h-2.5v1.5h1.75V20h-13.5V5.25h1.75v-1.5H4.25A.75.75 0 0 0 3.5 4.5v16c0 .41.34.75.75.75h15a.75.75 0 0 0 .75-.75v-16a.75.75 0 0 0-.75-.75Zm-10.5 0V2.5h6.5v1.25h-6.5Zm0 1.5h6.5A.75.75 0 0 0 16 4.5V2.5a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 0 8 2.5v2c0 .41.34.75.75.75Z"/></svg>
-        </span>
-        <span class="nav-label">הגיעו</span>
-      </button>
-      <button class="nav-btn active" data-screen="open" type="button">
-        <span class="nav-icon">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.85 4.8 6.1v11.73L12 21.15l7.2-3.32V6.1L12 2.85Zm5.7 4.22-1.84.85-7.02-3.08 3.16-1.42 5.7 2.65ZM12 11.38 6.2 8.74l5.8-2.65 5.8 2.65L12 11.38Zm-6 6.45V9.92l5.25 2.39v7.05L6 17.83Zm6.75 1.53v-7.05L18 9.92v7.9l-5.25 1.54Z"/></svg>
-        </span>
+      <button class="nav-btn active nav-open" data-screen="open" type="button">
+        <span class="nav-icon">▣</span>
         <span class="nav-label">בדרך</span>
+      </button>
+      <button class="nav-btn nav-done" data-screen="done" type="button">
+        <span class="nav-icon">☑</span>
+        <span class="nav-label">הגיעו</span>
       </button>
     </nav>
   </div>
@@ -182,6 +234,6 @@
     </div>
   </dialog>
 
-  <script src="app.js?v=19"></script>
+  <script src="app.js?v=20"></script>
 </body>
 </html>
