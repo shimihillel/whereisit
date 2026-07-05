@@ -108,6 +108,17 @@
             <textarea id="note" rows="3" placeholder="משהו שכדאי לזכור?"></textarea>
           </label>
 
+          <label class="field">
+            <span>תמונה / צילום מסך</span>
+            <input id="photo" type="file" accept="image/*" />
+            <small class="field-hint">אפשר לצרף תמונה אחת. נשמר מוקטן כדי לא להכביד על האפליקציה.</small>
+          </label>
+
+          <div id="imagePreviewWrap" class="image-preview-wrap" hidden>
+            <img id="imagePreview" class="image-preview" alt="תצוגה מקדימה של ההזמנה" />
+            <button id="removeImageBtn" class="remove-image-btn" type="button">הסירי תמונה</button>
+          </div>
+
           <fieldset class="category-area">
             <legend>קטגוריה</legend>
             <div id="categoryChips" class="category-grid"></div>
@@ -223,5 +234,18 @@
   </dialog>
 
   <script src="app.js"></script>
+
+  <dialog id="arriveDialog" class="details-dialog">
+    <div class="details-panel arrive-panel">
+      <button id="closeArriveDialog" class="dialog-close" type="button" aria-label="סגירה">×</button>
+      <h3 class="details-title">ההזמנה הגיעה 🎉</h3>
+      <p class="details-sub">יש כאן גם תמונה. למחוק אותה כדי שהאפליקציה תישאר קלילה, או להשאיר?</p>
+      <div class="details-actions stacked-actions">
+        <button id="arriveDeleteImageBtn" class="dialog-btn primary" type="button">למחוק תמונה ולהעביר</button>
+        <button id="arriveKeepImageBtn" class="dialog-btn" type="button">להשאיר תמונה</button>
+      </div>
+    </div>
+  </dialog>
+
 </body>
 </html>

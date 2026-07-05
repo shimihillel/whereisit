@@ -19,6 +19,8 @@ const categories = [
 ];
 
 let orders = loadOrders();
+let pendingImageData = '';
+let pendingArriveOrderId = '';
 
 const els = {
   screens: {
@@ -51,6 +53,10 @@ const els = {
   amount: document.getElementById('amount'),
   tracking: document.getElementById('tracking'),
   note: document.getElementById('note'),
+  photo: document.getElementById('photo'),
+  imagePreviewWrap: document.getElementById('imagePreviewWrap'),
+  imagePreview: document.getElementById('imagePreview'),
+  removeImageBtn: document.getElementById('removeImageBtn'),
   categoryChips: document.getElementById('categoryChips'),
   doneSummary: document.getElementById('doneSummary'),
   monthDoneCount: document.getElementById('monthDoneCount'),
@@ -61,7 +67,11 @@ const els = {
   backupMount: document.getElementById('backupMount'),
   detailsDialog: document.getElementById('detailsDialog'),
   detailsContent: document.getElementById('detailsContent'),
-  closeDetails: document.getElementById('closeDetails')
+  closeDetails: document.getElementById('closeDetails'),
+  arriveDialog: document.getElementById('arriveDialog'),
+  closeArriveDialog: document.getElementById('closeArriveDialog'),
+  arriveDeleteImageBtn: document.getElementById('arriveDeleteImageBtn'),
+  arriveKeepImageBtn: document.getElementById('arriveKeepImageBtn')
 };
 
 init();
@@ -99,12 +109,20 @@ function bindEvents() {
     localStorage.setItem(DONE_CATEGORY_FILTER_STORAGE_KEY, els.doneCategoryFilter.value);
     render();
   });
+  els.photo.addEventListener('change', onImageSelected);
+  els.removeImageBtn.addEventListener('click', removeCurrentImage);
   els.form.addEventListener('submit', onSubmitForm);
   els.cancelEdit.addEventListener('click', () => { resetForm(); showScreen('open'); });
   els.closeDetails.addEventListener('click', closeDetails);
   els.detailsDialog.addEventListener('click', (event) => {
     if (event.target === els.detailsDialog) closeDetails();
   });
+  els.closeArriveDialog.addEventListener('click', closeArriveDialog);
+  els.arriveDialog.addEventListener('click', (event) => {
+    if (event.target === els.arriveDialog) closeArriveDialog();
+  });
+  els.arriveDeleteImageBtn.addEventListener('click', () => finalizeArrive(true));
+  els.arriveKeepImageBtn.addEventListener('click', () => finalizeArrive(false));
 }
 
 function buildCategoryChips() {
@@ -178,6 +196,7 @@ function collectFormValues() {
     amount: Number(els.amount.value || 0),
     tracking: els.tracking.value.trim(),
     note: els.note.value.trim(),
+    imageData: pendingImageData || '',
     category: categoryInput ? categoryInput.value : 'other'
   };
 
@@ -186,6 +205,70 @@ function collectFormValues() {
     return null;
   }
   return payload;
+}
+
+async function onImageSelected() {
+  const file = els.photo.files && els.photo.files[0];
+  if (!file) return;
+
+  try {
+    pendingImageData = await compressImageFile(file, 1280, 0.82);
+    updateImagePreview(pendingImageData);
+    showToast('התמונה נוספה.');
+  } catch (error) {
+    pendingImageData = '';
+    updateImagePreview('');
+    els.photo.value = '';
+    showToast('לא הצלחתי לטעון את התמונה.');
+  }
+}
+
+function removeCurrentImage() {
+  pendingImageData = '';
+  els.photo.value = '';
+  updateImagePreview('');
+}
+
+function updateImagePreview(imageData) {
+  const hasImage = Boolean(imageData);
+  els.imagePreviewWrap.hidden = !hasImage;
+  if (hasImage) {
+    els.imagePreview.src = imageData;
+  } else {
+    els.imagePreview.removeAttribute('src');
+  }
+}
+
+function compressImageFile(file, maxDimension = 1280, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => {
+        let width = image.width;
+        let height = image.height;
+
+        if (width > maxDimension || height > maxDimension) {
+          const ratio = Math.min(maxDimension / width, maxDimension / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      image.onerror = reject;
+      image.src = reader.result;
+    };
+
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
 }
 
 function render() {
@@ -348,22 +431,30 @@ function renderDoneList(list) {
 function openCardTemplate(order) {
   const category = getCategory(order.category);
   const trackingText = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
+  const imageThumb = order.imageData
+    ? `<div class="order-thumb-wrap"><img class="order-thumb" src="${order.imageData}" alt="" /></div>`
+    : '';
   return `
     <article class="order-card open-card" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
       <span class="order-dot"></span>
-      <div class="order-top">
-        <div class="order-store-block">
-          <h3 class="order-store">${escapeHtml(order.store)}</h3>
+      <div class="order-body ${order.imageData ? 'has-image' : ''}">
+        <div class="order-text">
+          <div class="order-top">
+            <div class="order-store-block">
+              <h3 class="order-store">${escapeHtml(order.store)}</h3>
+            </div>
+            <div class="order-price">${formatCurrency(order.amount)}</div>
+          </div>
+          <p class="order-item">${escapeHtml(order.item)}</p>
+          <div class="order-meta">
+            <span>${formatDate(order.date)}</span>
+            <span class="order-meta-sep">|</span>
+            <span class="cat-pill">${category.label}</span>
+            <span class="order-meta-sep">|</span>
+            <span>${trackingText}</span>
+          </div>
         </div>
-        <div class="order-price">${formatCurrency(order.amount)}</div>
-      </div>
-      <p class="order-item">${escapeHtml(order.item)}</p>
-      <div class="order-meta">
-        <span>${formatDate(order.date)}</span>
-        <span class="order-meta-sep">|</span>
-        <span class="cat-pill">${category.label}</span>
-        <span class="order-meta-sep">|</span>
-        <span>${trackingText}</span>
+        ${imageThumb}
       </div>
       <div class="order-actions">
         <button class="arrived-btn" type="button" data-action="arrive" data-id="${order.id}">הגיע</button>
@@ -375,9 +466,13 @@ function openCardTemplate(order) {
 
 function doneCardTemplate(order) {
   const category = getCategory(order.category);
+  const imageThumb = order.imageData
+    ? `<img class="done-thumb" src="${order.imageData}" alt="" />`
+    : '';
   return `
     <article class="order-card done-card" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
       <span class="cat-pill">${category.label}</span>
+      ${imageThumb}
       <h3 class="order-store">${escapeHtml(order.store)}</h3>
       <p class="order-item">${escapeHtml(order.item)}</p>
       <span class="order-price">${formatCurrency(order.amount)}</span>
@@ -410,18 +505,64 @@ function handleAction(action, id) {
 }
 
 function markArrived(id) {
-  orders = orders.map(order => order.id === id ? { ...order, status: 'done', arrivedAt: new Date().toISOString(), updatedAt: new Date().toISOString() } : order);
+  const order = orders.find(item => item.id === id);
+  if (!order) return;
+
+  if (order.imageData) {
+    pendingArriveOrderId = id;
+    closeDetails();
+    els.arriveDialog.showModal();
+    return;
+  }
+
+  applyArrived(id, false);
+}
+
+function finalizeArrive(removeImage) {
+  if (!pendingArriveOrderId) {
+    closeArriveDialog();
+    return;
+  }
+  const id = pendingArriveOrderId;
+  closeArriveDialog();
+  applyArrived(id, removeImage);
+}
+
+function applyArrived(id, removeImage) {
+  orders = orders.map(order => order.id === id
+    ? {
+        ...order,
+        status: 'done',
+        imageData: removeImage ? '' : (order.imageData || ''),
+        arrivedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    : order
+  );
   saveOrders();
   render();
   closeDetails();
-  showToast(randomLine([
-    'הגיעה. איזה רגע.',
-    'נחתה אצלך. ניצחון קטן.',
-    'הגיעה! אפשר להפסיק לרענן.',
-    'סומן כהגיע. הדרמה הסתיימה.',
-    'הועבר לארכיון הניצחונות הקטנים.',
-    'עוד תיק נסגר בהצלחה.'
-  ]));
+  if (removeImage) {
+    showToast(randomLine([
+      'הגיעה, והתמונה נמחקה. נקי ויעיל.',
+      'הועבר ל״הגיעו״ בלי התמונה. חסכוני מצידך.',
+      'הגיעה. התמונה ירדה כדי לשמור על קלילות.'
+    ]));
+  } else {
+    showToast(randomLine([
+      'הגיעה. איזה רגע.',
+      'נחתה אצלך. ניצחון קטן.',
+      'הגיעה! אפשר להפסיק לרענן.',
+      'סומן כהגיע. הדרמה הסתיימה.',
+      'הועבר לארכיון הניצחונות הקטנים.',
+      'עוד תיק נסגר בהצלחה.'
+    ]));
+  }
+}
+
+function closeArriveDialog() {
+  pendingArriveOrderId = '';
+  if (els.arriveDialog.open) els.arriveDialog.close();
 }
 
 function restoreToOpen(id) {
@@ -442,6 +583,9 @@ function editOrder(id) {
   els.amount.value = order.amount || '';
   els.tracking.value = order.tracking || '';
   els.note.value = order.note || '';
+  pendingImageData = order.imageData || '';
+  updateImagePreview(pendingImageData);
+  els.photo.value = '';
   const categoryInput = document.querySelector(`input[name="category"][value="${order.category || 'other'}"]`);
   if (categoryInput) categoryInput.checked = true;
   els.formTitle.textContent = 'עריכת הזמנה';
@@ -473,6 +617,7 @@ function openDetails(id) {
   els.detailsContent.innerHTML = `
     <h3 class="details-title">${escapeHtml(order.store)}</h3>
     <p class="details-sub">${escapeHtml(order.item)}</p>
+    ${order.imageData ? `<div class="details-image-wrap"><img class="details-image" src="${order.imageData}" alt="" /></div>` : ''}
     <div class="details-grid">
       <div class="details-row"><strong>סכום</strong><span>${formatCurrency(order.amount)}</span></div>
       <div class="details-row"><strong>תאריך</strong><span>${formatDate(order.date)}</span></div>
@@ -502,6 +647,8 @@ function resetForm() {
   els.editingId.value = '';
   els.formTitle.textContent = 'הוספת הזמנה';
   els.cancelEdit.hidden = true;
+  pendingImageData = '';
+  updateImagePreview('');
   setTodayIfEmpty();
   const firstCategory = document.querySelector('input[name="category"]');
   if (firstCategory) firstCategory.checked = true;
@@ -664,7 +811,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v6-mockup',
+      version: 'v12-arrive-image-choice',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
