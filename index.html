@@ -16,8 +16,12 @@
 <body>
   <div class="app-shell">
     <section id="screen-open" class="screen active" aria-label="בדרך">
-      <header class="hero">
-        <h1>איפה זה?!</h1>
+      <header class="hero hero-open">
+        <div class="hero-toolbar" aria-hidden="true">
+          <button class="hero-icon-btn" type="button" tabindex="-1">🔔</button>
+          <button class="hero-icon-btn" type="button" tabindex="-1">⬚</button>
+        </div>
+        <h1><span class="title-main">איפה זה</span><span class="title-accent">?!</span></h1>
         <p id="heroSubtitle">0 חבילות בדרך. עכשיו ממש רגוע.</p>
       </header>
 
@@ -217,7 +221,7 @@
         <span class="nav-label">הגיעו</span>
       </button>
       <button class="nav-btn active" data-screen="open" type="button">
-        <span class="nav-icon">⌂</span>
+        <span class="nav-icon">📦</span>
         <span class="nav-label">בדרך</span>
       </button>
     </nav>
