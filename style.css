@@ -923,3 +923,178 @@ svg {
     height: 94px;
   }
 }
+
+
+/* === v25 tiny designer polish === */
+
+/* plus button sits a little more proudly above the nav */
+.fab {
+  bottom: calc(max(8px, env(safe-area-inset-bottom)) + 36px);
+  width: 62px;
+  height: 62px;
+  border-width: 5px;
+  box-shadow: 0 12px 26px rgba(86, 53, 203, .26);
+}
+
+/* slightly more refined bottom navigation */
+.bottom-nav {
+  height: 76px;
+  border-radius: 27px;
+  box-shadow: 0 8px 24px rgba(37, 24, 80, 0.045);
+}
+
+.bottom-nav::before {
+  width: 104px;
+  height: 36px;
+  border-top-left-radius: 21px;
+  border-top-right-radius: 21px;
+}
+
+.nav-btn {
+  top: 10px;
+  height: 51px;
+  border-radius: 17px;
+}
+
+.nav-label {
+  font-size: 0.9rem;
+}
+
+/* order cards: cleaner rhythm, slightly more premium */
+.order-card {
+  padding: 14px;
+  border-radius: 20px;
+}
+
+.order-main {
+  gap: 13px;
+}
+
+.thumb {
+  border-radius: 16px;
+}
+
+.order-topline {
+  margin-bottom: 7px;
+}
+
+.order-topline h3 {
+  font-size: 1.28rem;
+}
+
+.item {
+  color: #555064;
+}
+
+.meta {
+  gap: 8px;
+}
+
+.pill {
+  min-height: 30px;
+  padding: 4px 12px;
+  font-size: 0.88rem;
+}
+
+.order-actions {
+  margin-top: 13px;
+  padding-top: 12px;
+}
+
+.arrived {
+  min-width: 104px;
+  height: 40px;
+  border-radius: 13px;
+  font-size: 0.94rem;
+}
+
+.details {
+  font-size: 0.96rem;
+  color: #4b4658;
+}
+
+/* summary card: a touch airier and quieter */
+.summary {
+  border-radius: 25px;
+  padding: 17px;
+}
+
+.summary-main {
+  font-size: 1.56rem;
+}
+
+.summary-copy p {
+  line-height: 1.35;
+}
+
+/* filters feel less like form controls */
+.filter-select select {
+  min-height: 48px;
+  border-radius: 15px;
+  color: #332f3f;
+}
+
+.filter-select::after {
+  left: 13px;
+}
+
+/* form polish: same language as main screen */
+.form-card,
+.fun-card,
+.tools-card,
+.empty-state {
+  border-radius: 23px;
+}
+
+.field input,
+.field textarea {
+  border-radius: 15px;
+}
+
+.category-chip {
+  min-height: 36px;
+  padding: 7px 13px;
+}
+
+/* done cards get a softer look */
+.done-card {
+  border-radius: 19px;
+}
+
+.done-label {
+  min-height: 28px;
+  font-size: 0.84rem;
+}
+
+/* tiny interaction polish */
+.arrived,
+.details,
+.fab,
+.nav-btn,
+.primary-btn,
+.ghost-btn,
+.remove-image-btn,
+.backup-btn,
+.dialog-btn {
+  transition: transform .14s cubic-bezier(.2,.8,.2,1), background .14s cubic-bezier(.2,.8,.2,1), box-shadow .14s cubic-bezier(.2,.8,.2,1);
+}
+
+.arrived:active,
+.details:active,
+.fab:active,
+.nav-btn:active,
+.primary-btn:active,
+.ghost-btn:active,
+.remove-image-btn:active,
+.backup-btn:active,
+.dialog-btn:active {
+  transform: scale(.975);
+}
+
+@media (max-width: 370px) {
+  .fab {
+    bottom: calc(max(8px, env(safe-area-inset-bottom)) + 34px);
+    width: 60px;
+    height: 60px;
+  }
+}
