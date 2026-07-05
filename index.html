@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#faf6f1" />
+  <meta name="theme-color" content="#fbfbfe" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="איפה זה?!" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -65,7 +65,6 @@
         <div id="openList" class="open-list"></div>
       </section>
 
-      <button id="quickAddBtn" class="wide-primary-btn" type="button">+ לא לשפוט</button>
     </section>
 
     <section id="screen-form" class="screen" aria-label="הוספה">
@@ -210,18 +209,16 @@
       </section>
     </section>
 
+    <button id="quickAddBtn" class="fab-add" type="button" aria-label="הוספת הזמנה">＋</button>
+
     <nav class="bottom-nav" aria-label="ניווט">
-      <button class="nav-btn active" data-screen="open" type="button">
-        <span class="nav-icon">⌂</span>
-        <span class="nav-label">בדרך</span>
-      </button>
-      <button class="nav-btn nav-add" data-screen="form" type="button">
-        <span class="nav-icon">＋</span>
-        <span class="nav-label">הוספה</span>
-      </button>
       <button class="nav-btn" data-screen="done" type="button">
         <span class="nav-icon">☑</span>
         <span class="nav-label">הגיעו</span>
+      </button>
+      <button class="nav-btn active" data-screen="open" type="button">
+        <span class="nav-icon">⌂</span>
+        <span class="nav-label">בדרך</span>
       </button>
     </nav>
   </div>
