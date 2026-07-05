@@ -435,7 +435,7 @@ function openCardTemplate(order) {
     ? `<div class="order-thumb-wrap"><img class="order-thumb" src="${order.imageData}" alt="" /></div>`
     : '';
   return `
-    <article class="order-card open-card" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
+    <article class="order-card open-card ${order.imageData ? 'has-order-image' : ''}" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
       <span class="order-dot"></span>
       <div class="order-body ${order.imageData ? 'has-image' : ''}">
         <div class="order-text">
@@ -509,23 +509,12 @@ function markArrived(id) {
   if (!order) return;
 
   if (order.imageData) {
-    pendingArriveOrderId = id;
-    closeDetails();
-    els.arriveDialog.showModal();
+    const removeImage = confirm('ההזמנה הגיעה 🎉\n\nלמחוק את התמונה כדי שהאפליקציה תישאר קלילה?\n\nאישור = למחוק תמונה\nביטול = להשאיר תמונה');
+    applyArrived(id, removeImage);
     return;
   }
 
   applyArrived(id, false);
-}
-
-function finalizeArrive(removeImage) {
-  if (!pendingArriveOrderId) {
-    closeArriveDialog();
-    return;
-  }
-  const id = pendingArriveOrderId;
-  closeArriveDialog();
-  applyArrived(id, removeImage);
 }
 
 function applyArrived(id, removeImage) {
@@ -811,7 +800,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v12-arrive-image-choice',
+      version: 'v13-image-fix',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage

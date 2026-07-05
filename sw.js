@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eifo-ze-v12-arrive-image-choice';
+const CACHE_NAME = 'eifo-ze-v13-image-fix';
 const ASSETS = ['./','./index.html','./style.css','./app.js','./manifest.json','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./favicon.png'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));

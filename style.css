@@ -1094,3 +1094,17 @@ input, textarea { color: var(--ink); }
   justify-content: center;
   min-height: 48px;
 }
+
+
+/* === v13 image card fix === */
+.open-card.has-order-image .order-dot {
+  display: none;
+}
+
+.open-card.has-order-image .order-top {
+  padding-left: 0;
+}
+
+.open-card.has-order-image .order-body {
+  gap: 12px;
+}
