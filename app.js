@@ -781,7 +781,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v15-soft-fab-icon',
+      version: 'v17-white-icon',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
