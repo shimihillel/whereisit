@@ -20,7 +20,6 @@ const categories = [
 
 let orders = loadOrders();
 let pendingImageData = '';
-let pendingArriveOrderId = '';
 
 const els = {
   screens: {
@@ -67,11 +66,7 @@ const els = {
   backupMount: document.getElementById('backupMount'),
   detailsDialog: document.getElementById('detailsDialog'),
   detailsContent: document.getElementById('detailsContent'),
-  closeDetails: document.getElementById('closeDetails'),
-  arriveDialog: document.getElementById('arriveDialog'),
-  closeArriveDialog: document.getElementById('closeArriveDialog'),
-  arriveDeleteImageBtn: document.getElementById('arriveDeleteImageBtn'),
-  arriveKeepImageBtn: document.getElementById('arriveKeepImageBtn')
+  closeDetails: document.getElementById('closeDetails')
 };
 
 init();
@@ -117,12 +112,6 @@ function bindEvents() {
   els.detailsDialog.addEventListener('click', (event) => {
     if (event.target === els.detailsDialog) closeDetails();
   });
-  els.closeArriveDialog.addEventListener('click', closeArriveDialog);
-  els.arriveDialog.addEventListener('click', (event) => {
-    if (event.target === els.arriveDialog) closeArriveDialog();
-  });
-  els.arriveDeleteImageBtn.addEventListener('click', () => finalizeArrive(true));
-  els.arriveKeepImageBtn.addEventListener('click', () => finalizeArrive(false));
 }
 
 function buildCategoryChips() {
@@ -435,8 +424,7 @@ function openCardTemplate(order) {
     ? `<div class="order-thumb-wrap"><img class="order-thumb" src="${order.imageData}" alt="" /></div>`
     : '';
   return `
-    <article class="order-card open-card ${order.imageData ? 'has-order-image' : ''}" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
-      <span class="order-dot"></span>
+    <article class="order-card open-card" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
       <div class="order-body ${order.imageData ? 'has-image' : ''}">
         <div class="order-text">
           <div class="order-top">
@@ -508,50 +496,40 @@ function markArrived(id) {
   const order = orders.find(item => item.id === id);
   if (!order) return;
 
-  if (order.imageData) {
-    const removeImage = confirm('ההזמנה הגיעה 🎉\n\nלמחוק את התמונה כדי שהאפליקציה תישאר קלילה?\n\nאישור = למחוק תמונה\nביטול = להשאיר תמונה');
-    applyArrived(id, removeImage);
-    return;
-  }
+  const hadImage = Boolean(order.imageData);
 
-  applyArrived(id, false);
-}
-
-function applyArrived(id, removeImage) {
-  orders = orders.map(order => order.id === id
+  orders = orders.map(item => item.id === id
     ? {
-        ...order,
+        ...item,
         status: 'done',
-        imageData: removeImage ? '' : (order.imageData || ''),
+        imageData: '',
         arrivedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }
-    : order
+    : item
   );
+
   saveOrders();
   render();
   closeDetails();
-  if (removeImage) {
-    showToast(randomLine([
-      'הגיעה, והתמונה נמחקה. נקי ויעיל.',
-      'הועבר ל״הגיעו״ בלי התמונה. חסכוני מצידך.',
-      'הגיעה. התמונה ירדה כדי לשמור על קלילות.'
-    ]));
-  } else {
-    showToast(randomLine([
-      'הגיעה. איזה רגע.',
-      'נחתה אצלך. ניצחון קטן.',
-      'הגיעה! אפשר להפסיק לרענן.',
-      'סומן כהגיע. הדרמה הסתיימה.',
-      'הועבר לארכיון הניצחונות הקטנים.',
-      'עוד תיק נסגר בהצלחה.'
-    ]));
-  }
-}
 
-function closeArriveDialog() {
-  pendingArriveOrderId = '';
-  if (els.arriveDialog.open) els.arriveDialog.close();
+  if (hadImage) {
+    showToast(randomLine([
+      'הגיעה. התמונה נמחקה כדי לשמור על קלילות.',
+      'הועבר ל״הגיעו״ והתמונה ירדה.',
+      'נחתה אצלך. האפליקציה נשארה רזה.'
+    ]));
+    return;
+  }
+
+  showToast(randomLine([
+    'הגיעה. איזה רגע.',
+    'נחתה אצלך. ניצחון קטן.',
+    'הגיעה! אפשר להפסיק לרענן.',
+    'סומן כהגיע. הדרמה הסתיימה.',
+    'הועבר לארכיון הניצחונות הקטנים.',
+    'עוד תיק נסגר בהצלחה.'
+  ]));
 }
 
 function restoreToOpen(id) {
@@ -800,7 +778,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v13-image-fix',
+      version: 'v14-simple-arrive',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage

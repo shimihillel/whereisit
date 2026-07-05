@@ -1078,33 +1078,15 @@ input, textarea { color: var(--ink); }
 }
 
 
-/* === v12 image keep/delete on arrived === */
-.arrive-panel .details-sub {
-  margin-bottom: 16px;
+/* === v14 simple arrive + no card dots === */
+.order-dot {
+  display: none !important;
 }
 
-.stacked-actions {
-  display: grid;
-  gap: 10px;
+.order-top {
+  padding-left: 0 !important;
 }
 
-.stacked-actions .dialog-btn,
-.stacked-actions .dialog-btn.primary {
-  width: 100%;
-  justify-content: center;
-  min-height: 48px;
-}
-
-
-/* === v13 image card fix === */
-.open-card.has-order-image .order-dot {
-  display: none;
-}
-
-.open-card.has-order-image .order-top {
-  padding-left: 0;
-}
-
-.open-card.has-order-image .order-body {
-  gap: 12px;
+.open-card {
+  overflow: hidden;
 }
