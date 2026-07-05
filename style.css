@@ -495,3 +495,31 @@ svg {
     height: 94px;
   }
 }
+
+
+/* === prototype fix 1 === */
+.top h1 {
+  direction: rtl;
+}
+
+.top h1 .accent {
+  color: var(--purple);
+  margin-inline-start: 2px;
+}
+
+.thumb-dot {
+  display: none !important;
+}
+
+.nav-open {
+  grid-column: 3 !important;
+}
+
+.nav-done {
+  grid-column: 1 !important;
+}
+
+.nav-item:first-child,
+.nav-item:last-child {
+  grid-column: auto;
+}
