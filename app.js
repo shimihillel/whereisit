@@ -125,8 +125,8 @@ function buildCategoryChips() {
 
 function buildCategoryFilters() {
   const options = [
-    '<option value="all">הכל</option>',
-    ...categories.map(category => `<option value="${category.id}">${category.label}</option>`)
+    '<option value="all">קטגוריה: הכל</option>',
+    ...categories.map(category => `<option value="${category.id}">קטגוריה: ${category.label}</option>`)
   ].join('');
 
   els.openCategoryFilter.innerHTML = options;
@@ -141,6 +141,9 @@ function showScreen(screenName) {
     screen.classList.toggle('active', key === screenName);
   });
   els.navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.screen === screenName));
+  if (els.quickAddBtn) {
+    els.quickAddBtn.classList.toggle('is-hidden', screenName === 'form');
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -421,32 +424,39 @@ function openCardTemplate(order) {
   const category = getCategory(order.category);
   const trackingText = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
   const imageThumb = order.imageData
-    ? `<div class="order-thumb-wrap"><img class="order-thumb" src="${order.imageData}" alt="" /></div>`
-    : '';
+    ? `<div class="thumb"><img class="order-thumb" src="${order.imageData}" alt="" /></div>`
+    : `<div class="thumb no-image">📦</div>`;
+
   return `
-    <article class="order-card open-card" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
-      <div class="order-body ${order.imageData ? 'has-image' : ''}">
-        <div class="order-text">
-          <div class="order-top">
-            <div class="order-store-block">
-              <h3 class="order-store">${escapeHtml(order.store)}</h3>
-            </div>
-            <div class="order-price">${formatCurrency(order.amount)}</div>
-          </div>
-          <p class="order-item">${escapeHtml(order.item)}</p>
-          <div class="order-meta">
-            <span>${formatDate(order.date)}</span>
-            <span class="order-meta-sep">|</span>
-            <span class="cat-pill">${category.label}</span>
-            <span class="order-meta-sep">|</span>
-            <span>${trackingText}</span>
-          </div>
-        </div>
+    <article class="order-card open-card" data-open-details="${order.id}">
+      <div class="order-main">
         ${imageThumb}
+
+        <div class="order-copy">
+          <div class="order-topline">
+            <div>
+              <h3 class="order-store">${escapeHtml(order.store)}</h3>
+              <p class="item">${escapeHtml(order.item)}</p>
+            </div>
+            <strong class="price">${formatCurrency(order.amount)}</strong>
+          </div>
+
+          <div class="meta">
+            <span class="pill" style="background:${category.color};">${category.label}</span>
+            <span class="divider"></span>
+            <span>${formatDate(order.date)}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 3.5v3M17 3.5v3M4.5 9h15M6 5h12a1.5 1.5 0 0 1 1.5 1.5v12A1.5 1.5 0 0 1 18 20H6a1.5 1.5 0 0 1-1.5-1.5v-12A1.5 1.5 0 0 1 6 5Z"/>
+            </svg>
+          </div>
+
+          <p class="tracking">${trackingText}</p>
+        </div>
       </div>
+
       <div class="order-actions">
-        <button class="arrived-btn" type="button" data-action="arrive" data-id="${order.id}">הגיע</button>
-        <button class="text-link-btn" type="button" data-action="details" data-id="${order.id}">פרטים <span>›</span></button>
+        <button class="details" type="button" data-action="details" data-id="${order.id}">‹ פרטים</button>
+        <button class="arrived" type="button" data-action="arrive" data-id="${order.id}">הגיע ✓</button>
       </div>
     </article>
   `;
@@ -456,17 +466,18 @@ function doneCardTemplate(order) {
   const category = getCategory(order.category);
   const imageThumb = order.imageData
     ? `<img class="done-thumb" src="${order.imageData}" alt="" />`
-    : '';
+    : `<div class="done-thumb thumb no-image">📦</div>`;
+
   return `
-    <article class="order-card done-card" data-open-details="${order.id}" style="--dot-color:${category.color}; --pill-color:${category.color};">
-      <span class="cat-pill">${category.label}</span>
+    <article class="done-card" data-open-details="${order.id}">
+      <span class="pill" style="background:${category.color};">${category.label}</span>
       ${imageThumb}
       <h3 class="order-store">${escapeHtml(order.store)}</h3>
       <p class="order-item">${escapeHtml(order.item)}</p>
-      <span class="order-price">${formatCurrency(order.amount)}</span>
+      <span class="price">${formatCurrency(order.amount)}</span>
       <span class="order-meta">${formatDate(order.date)}</span>
       <span class="done-label">הגיע</span>
-      <button class="text-link-btn" type="button" data-action="details" data-id="${order.id}">פרטים <span>›</span></button>
+      <button class="details" type="button" data-action="details" data-id="${order.id}">‹ פרטים</button>
     </article>
   `;
 }
@@ -778,7 +789,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v14-simple-arrive',
+      version: 'v24-clean-ui',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
