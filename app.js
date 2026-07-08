@@ -30,6 +30,8 @@ const els = {
   heroSubtitle: document.getElementById('heroSubtitle'),
   openSummary: document.getElementById('openSummary'),
   moodLine: document.getElementById('moodLine'),
+  categoryBreakdown: document.getElementById('categoryBreakdown'),
+  attentionPanel: document.getElementById('attentionPanel'),
   openSearch: document.getElementById('openSearch'),
   openSort: document.getElementById('openSort'),
   openCategoryFilter: document.getElementById('openCategoryFilter'),
@@ -66,7 +68,11 @@ const els = {
   backupMount: document.getElementById('backupMount'),
   detailsDialog: document.getElementById('detailsDialog'),
   detailsContent: document.getElementById('detailsContent'),
-  closeDetails: document.getElementById('closeDetails')
+  closeDetails: document.getElementById('closeDetails'),
+  arrivalDialog: document.getElementById('arrivalDialog'),
+  arrivalDialogText: document.getElementById('arrivalDialogText'),
+  arrivalArchiveBtn: document.getElementById('arrivalArchiveBtn'),
+  arrivalStayBtn: document.getElementById('arrivalStayBtn')
 };
 
 init();
@@ -109,6 +115,20 @@ function bindEvents() {
   els.form.addEventListener('submit', onSubmitForm);
   els.cancelEdit.addEventListener('click', () => { resetForm(); showScreen('open'); });
   els.closeDetails.addEventListener('click', closeDetails);
+  if (els.arrivalArchiveBtn) {
+    els.arrivalArchiveBtn.addEventListener('click', () => {
+      closeArrivalDialog();
+      showScreen('done');
+    });
+  }
+  if (els.arrivalStayBtn) {
+    els.arrivalStayBtn.addEventListener('click', closeArrivalDialog);
+  }
+  if (els.arrivalDialog) {
+    els.arrivalDialog.addEventListener('click', (event) => {
+      if (event.target === els.arrivalDialog) closeArrivalDialog();
+    });
+  }
   els.detailsDialog.addEventListener('click', (event) => {
     if (event.target === els.detailsDialog) closeDetails();
   });
@@ -270,6 +290,7 @@ function render() {
   const visibleDoneOrders = filterByCategory(filterOrders(doneOrders, els.doneSearch.value), els.doneCategoryFilter.value);
 
   renderSummary(openOrders, doneOrders);
+  renderAttention(openOrders);
   renderMonthlyFun(doneOrders);
   renderOpenList(visibleOpenOrders);
   renderDoneList(visibleDoneOrders);
@@ -280,17 +301,23 @@ function renderSummary(openOrders, doneOrders) {
   const total = openOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
   const doneCount = doneOrders.length;
 
-  els.openSummary.textContent = `${count} חבילות · ${formatCurrency(total)}`;
+  els.openSummary.textContent = `${formatCurrency(total)} תקועים בדרך`;
   els.openCountBadge.textContent = count;
   els.doneCountBadge.textContent = doneCount;
   els.heroSubtitle.textContent = count === 0
     ? 'אין כרגע חבילות בדרך. זה כמעט מחשיד.'
-    : `${count} חבילות בדרך. ${count === 1 ? 'אחת' : count === 2 ? 'אחת לפחות' : 'אחת'} כנראה כבר עושה סיבוב בארץ.`;
+    : `${count} ${count === 1 ? 'חבילה' : 'חבילות'} בדרך. האפליקציה על זה.`;
 
   const moods = count === 0
     ? ['האשראי נושם לרווחה בינתיים.', 'שקט חריג בגזרת החבילות.', 'רגע של חסד.', 'אין חבילות בדרך. מוזר, אבל נעים.']
     : ['האשראי לא מגיב כרגע.', 'עוד רגע זה אצלך.', 'הדואר שוב במרדף.', 'יש דברים בדרך, ויש תקווה.'];
   els.moodLine.textContent = moods[Math.floor(Math.random() * moods.length)];
+
+  const breakdown = buildOpenCategoryBreakdown(openOrders);
+  if (els.categoryBreakdown) {
+    els.categoryBreakdown.hidden = !breakdown;
+    els.categoryBreakdown.textContent = breakdown;
+  }
 
   els.doneSummary.textContent = doneCount === 0
     ? 'כאן כל מה שכבר נחת אצלך.'
@@ -357,19 +384,20 @@ function buildFunLine(count, total, topStore, topCategory) {
     ]);
   }
 
-  if (count === 1) {
+  if (topStore && count >= 2) {
     return randomLine([
-      'חבילה אחת נחתה החודש. פתיחה רגועה יחסית.',
-      'יש ראיה אחת בתיק. ממש התחלה של חקירה.',
-      'רק חבילה אחת החודש. האשראי כמעט מאמין לך.'
+      `${topStore} שוב מככבת. מפתיע? לא.`,
+      `${topStore} נכנסה לחדר ולא באה לשחק.`,
+      `החשודה התורנית: ${topStore}. לא מאשימות, רק מתעדות.`,
+      `${topStore} מתחילה להיראות כמו דמות חוזרת בעלילה.`
     ]);
   }
 
-  if (topStore && count >= 3) {
+  if (topCategory && topCategory !== '—' && count >= 2) {
     return randomLine([
-      `${topStore} מתחילה להיראות כמו דמות חוזרת בעלילה.`,
-      `החנות החשודה היא ${topStore}. לא מאשימות, רק מתעדות.`,
-      `${topStore} מככבת החודש. מעניין מאוד.`
+      `הקטגוריה ${topCategory} מבקשת עורך דין.`,
+      `${topCategory} מובילה החודש. יש פה דפוס.`,
+      `מחלקת ${topCategory} פעילה מדי בשביל לקרוא לזה מקרי.`
     ]);
   }
 
@@ -383,8 +411,8 @@ function buildFunLine(count, total, topStore, topCategory) {
 
   return randomLine([
     `${count} חבילות הגיעו החודש. סביר, אלגנטי, מתועד.`,
-    `הקטגוריה הבולטת: ${topCategory}. יש פה דפוס.`,
-    'החודש פעיל, אבל עדיין בגבולות הנחמד.'
+    'החודש פעיל, אבל עדיין בגבולות הנחמד.',
+    'הארכיון מתמלא בנימוס. בינתיים.'
   ]);
 }
 
@@ -416,7 +444,19 @@ function renderDoneList(list) {
     return;
   }
 
-  els.doneList.innerHTML = list.map(order => doneCardTemplate(order)).join('');
+  const groups = groupDoneOrdersByMonth(list);
+  els.doneList.innerHTML = groups.map(group => `
+    <section class="month-group">
+      <div class="month-heading">
+        <h3>${group.label}</h3>
+        <span>${group.orders.length} ${group.orders.length === 1 ? 'פריט' : 'פריטים'}</span>
+      </div>
+      <div class="month-grid">
+        ${group.orders.map(order => doneCardTemplate(order)).join('')}
+      </div>
+    </section>
+  `).join('');
+
   bindCardActions(els.doneList);
 }
 
@@ -523,24 +563,7 @@ function markArrived(id) {
   saveOrders();
   render();
   closeDetails();
-
-  if (hadImage) {
-    showToast(randomLine([
-      'הגיעה. התמונה נמחקה כדי לשמור על קלילות.',
-      'הועבר ל״הגיעו״ והתמונה ירדה.',
-      'נחתה אצלך. האפליקציה נשארה רזה.'
-    ]));
-    return;
-  }
-
-  showToast(randomLine([
-    'הגיעה. איזה רגע.',
-    'נחתה אצלך. ניצחון קטן.',
-    'הגיעה! אפשר להפסיק לרענן.',
-    'סומן כהגיע. הדרמה הסתיימה.',
-    'הועבר לארכיון הניצחונות הקטנים.',
-    'עוד תיק נסגר בהצלחה.'
-  ]));
+  showArrivalDialog(hadImage);
 }
 
 function restoreToOpen(id) {
@@ -706,6 +729,118 @@ function getCategory(id) {
   return categories.find(category => category.id === id) || categories[categories.length - 1];
 }
 
+
+function renderAttention(openOrders) {
+  if (!els.attentionPanel) return;
+
+  const oldOrders = openOrders
+    .map(order => ({ ...order, daysOpen: getDaysOpen(order) }))
+    .filter(order => order.daysOpen >= 14)
+    .sort((a, b) => b.daysOpen - a.daysOpen);
+
+  if (!oldOrders.length) {
+    els.attentionPanel.hidden = true;
+    els.attentionPanel.innerHTML = '';
+    return;
+  }
+
+  const first = oldOrders[0];
+  const title = oldOrders.length === 1
+    ? 'דורש תשומת לב'
+    : `${oldOrders.length} חבילות דורשות תשומת לב`;
+
+  const text = oldOrders.length === 1
+    ? `ההזמנה מ־${escapeHtml(first.store)} פתוחה כבר ${first.daysOpen} יום — אולי לבדוק?`
+    : `יש ${oldOrders.length} הזמנות שפתוחות מעל 14 יום — אולי לבדוק מה איתן?`;
+
+  const chips = oldOrders.slice(0, 3).map(order =>
+    `<span class="attention-chip">${escapeHtml(order.store)} · ${order.daysOpen} יום</span>`
+  ).join('');
+
+  els.attentionPanel.hidden = false;
+  els.attentionPanel.innerHTML = `
+    <h3>${title}</h3>
+    <p>${text}</p>
+    ${chips ? `<div class="attention-mini-list">${chips}</div>` : ''}
+  `;
+}
+
+function getDaysOpen(order) {
+  if (!order.date) return 0;
+  const start = new Date(`${order.date}T00:00:00`);
+  if (Number.isNaN(start.getTime())) return 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.floor((today - start) / 86400000));
+}
+
+function buildOpenCategoryBreakdown(openOrders) {
+  if (!openOrders.length) return '';
+
+  const totals = new Map();
+  openOrders.forEach(order => {
+    const key = order.category || 'other';
+    totals.set(key, (totals.get(key) || 0) + Number(order.amount || 0));
+  });
+
+  const top = Array.from(totals.entries())
+    .filter(([, total]) => total > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  if (!top.length) return '';
+
+  return 'מתוכם ' + top
+    .map(([categoryId, total]) => `${formatCurrency(total)} ${getCategory(categoryId).label}`)
+    .join(' · ');
+}
+
+function groupDoneOrdersByMonth(list) {
+  const groupsMap = new Map();
+
+  list.forEach(order => {
+    const baseDate = order.arrivedAt || order.updatedAt || order.date;
+    const date = baseDate ? new Date(baseDate) : new Date();
+    const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;
+    const key = `${safeDate.getFullYear()}-${String(safeDate.getMonth() + 1).padStart(2, '0')}`;
+    const label = safeDate.toLocaleDateString('he-IL', { month: 'long', year: 'numeric' });
+
+    if (!groupsMap.has(key)) {
+      groupsMap.set(key, { key, label, date: safeDate, orders: [] });
+    }
+    groupsMap.get(key).orders.push(order);
+  });
+
+  return Array.from(groupsMap.values())
+    .sort((a, b) => b.date - a.date);
+}
+
+function showArrivalDialog(hadImage) {
+  if (!els.arrivalDialog) {
+    showToast('ברוכה הבאה הביתה 📦');
+    return;
+  }
+
+  if (els.arrivalDialogText) {
+    els.arrivalDialogText.textContent = hadImage
+      ? 'החבילה עברה להגיעו, והתמונה נמחקה כדי שהאפליקציה תישאר קלילה.'
+      : 'החבילה עברה לארכיון הניצחונות הקטנים.';
+  }
+
+  if (typeof els.arrivalDialog.showModal === 'function') {
+    els.arrivalDialog.showModal();
+  } else {
+    showToast('ברוכה הבאה הביתה 📦');
+  }
+}
+
+function closeArrivalDialog() {
+  if (els.arrivalDialog && els.arrivalDialog.open) {
+    els.arrivalDialog.close();
+  }
+}
+
+
 function formatCurrency(value) {
   const number = Number(value || 0);
   return `₪${number.toLocaleString('he-IL', { maximumFractionDigits: 0 })}`;
@@ -789,7 +924,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v25-ui-polish',
+      version: 'v26-smart-fun',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage

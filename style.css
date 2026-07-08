@@ -1098,3 +1098,159 @@ svg {
     height: 60px;
   }
 }
+
+
+/* === v26 smart + fun features === */
+
+.category-breakdown {
+  margin-top: 9px !important;
+  color: #8f8a9c !important;
+  font-size: 0.88rem !important;
+  line-height: 1.35;
+}
+
+.attention-panel {
+  border: 1px solid #efe2c8;
+  background: linear-gradient(180deg, #fffaf1, #fff7e8);
+  border-radius: 19px;
+  padding: 13px 14px;
+  margin: -6px 0 18px;
+  color: #4c3a1f;
+}
+
+.attention-panel h3 {
+  margin: 0 0 5px;
+  font-size: 1rem;
+  font-weight: 920;
+  letter-spacing: -0.02em;
+}
+
+.attention-panel p {
+  margin: 0;
+  color: #7a6749;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.attention-mini-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.attention-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border-radius: 999px;
+  background: rgba(96, 67, 216, 0.08);
+  color: #6043d8;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  font-weight: 820;
+}
+
+.month-group {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 11px;
+}
+
+.month-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 4px 2px -1px;
+}
+
+.month-heading h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 940;
+  letter-spacing: -0.035em;
+}
+
+.month-heading span {
+  color: #9d98a8;
+  font-size: 0.88rem;
+  font-weight: 760;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.arrival-dialog {
+  width: min(100vw - 28px, 390px);
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.arrival-dialog::backdrop {
+  background: rgba(22, 18, 31, 0.22);
+}
+
+.arrival-panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  padding: 24px 18px 18px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(37, 24, 80, 0.12);
+}
+
+.arrival-check {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 13px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(180deg, #6c4ae6, #522dbc);
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 950;
+  box-shadow: 0 10px 22px rgba(86, 53, 203, .24);
+  animation: arrivalPop .34s cubic-bezier(.2, .9, .2, 1);
+}
+
+.arrival-panel h3 {
+  margin: 0;
+  font-size: 1.45rem;
+  font-weight: 950;
+  letter-spacing: -0.04em;
+}
+
+.arrival-panel p {
+  margin: 9px 0 16px;
+  color: var(--muted-dark);
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+
+.arrival-panel .primary-btn,
+.arrival-panel .ghost-btn {
+  width: 100%;
+  margin-top: 8px;
+}
+
+@keyframes arrivalPop {
+  0% { transform: scale(.72); opacity: 0; }
+  70% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 370px) {
+  .month-grid {
+    gap: 10px;
+  }
+
+  .attention-panel {
+    padding: 12px;
+  }
+}
