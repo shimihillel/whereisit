@@ -116,10 +116,7 @@ function bindEvents() {
   els.cancelEdit.addEventListener('click', () => { resetForm(); showScreen('open'); });
   els.closeDetails.addEventListener('click', closeDetails);
   if (els.arrivalArchiveBtn) {
-    els.arrivalArchiveBtn.addEventListener('click', () => {
-      closeArrivalDialog();
-      showScreen('done');
-    });
+    els.arrivalArchiveBtn.addEventListener('click', closeArrivalDialog);
   }
   if (els.arrivalStayBtn) {
     els.arrivalStayBtn.addEventListener('click', closeArrivalDialog);
@@ -285,15 +282,12 @@ function compressImageFile(file, maxDimension = 1280, quality = 0.82) {
 
 function render() {
   const openOrders = sortOpenOrders(orders.filter(order => order.status === 'open'));
-  const doneOrders = sortDoneOrders(orders.filter(order => order.status === 'done'));
+  const doneOrders = orders.filter(order => order.status === 'done');
   const visibleOpenOrders = filterByCategory(filterOrders(openOrders, els.openSearch.value), els.openCategoryFilter.value);
-  const visibleDoneOrders = filterByCategory(filterOrders(doneOrders, els.doneSearch.value), els.doneCategoryFilter.value);
 
   renderSummary(openOrders, doneOrders);
   renderAttention(openOrders);
-  renderMonthlyFun(doneOrders);
   renderOpenList(visibleOpenOrders);
-  renderDoneList(visibleDoneOrders);
 }
 
 function renderSummary(openOrders, doneOrders) {
@@ -303,7 +297,7 @@ function renderSummary(openOrders, doneOrders) {
 
   els.openSummary.textContent = `${formatCurrency(total)} תקועים בדרך`;
   els.openCountBadge.textContent = count;
-  els.doneCountBadge.textContent = doneCount;
+  if (els.doneCountBadge) els.doneCountBadge.textContent = doneCount;
   els.heroSubtitle.textContent = count === 0
     ? 'אין כרגע חבילות בדרך. זה כמעט מחשיד.'
     : `${count} ${count === 1 ? 'חבילה' : 'חבילות'} בדרך. האפליקציה על זה.`;
@@ -319,9 +313,11 @@ function renderSummary(openOrders, doneOrders) {
     els.categoryBreakdown.textContent = breakdown;
   }
 
-  els.doneSummary.textContent = doneCount === 0
-    ? 'כאן כל מה שכבר נחת אצלך.'
-    : `${doneCount} פריטים כבר הגיעו ונשמרו כאן.`;
+  if (els.doneSummary) {
+    els.doneSummary.textContent = doneCount === 0
+      ? 'כאן כל מה שכבר נחת אצלך.'
+      : `${doneCount} פריטים כבר הגיעו ונשמרו כאן.`;
+  }
 }
 
 function renderMonthlyFun(doneOrders) {
@@ -547,23 +543,12 @@ function markArrived(id) {
   const order = orders.find(item => item.id === id);
   if (!order) return;
 
-  const hadImage = Boolean(order.imageData);
-
-  orders = orders.map(item => item.id === id
-    ? {
-        ...item,
-        status: 'done',
-        imageData: '',
-        arrivedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    : item
-  );
+  orders = orders.filter(item => item.id !== id);
 
   saveOrders();
   render();
   closeDetails();
-  showArrivalDialog(hadImage);
+  showRemovedToast(order);
 }
 
 function restoreToOpen(id) {
@@ -815,23 +800,42 @@ function groupDoneOrdersByMonth(list) {
     .sort((a, b) => b.date - a.date);
 }
 
+
+let removedToastTimer = null;
+
+function showRemovedToast(order) {
+  document.querySelector('.removed-toast')?.remove();
+  clearTimeout(removedToastTimer);
+
+  const toast = document.createElement('div');
+  toast.className = 'removed-toast';
+  toast.innerHTML = `
+    <div>
+      <strong>הגיע הביתה 📦</strong>
+      <span>${escapeHtml(order.store || 'ההזמנה')} נמחקה מהרשימה.</span>
+    </div>
+    <button type="button">ביטול</button>
+  `;
+
+  toast.querySelector('button').addEventListener('click', () => {
+    clearTimeout(removedToastTimer);
+    orders = [order, ...orders];
+    saveOrders();
+    render();
+    toast.remove();
+    showToast('החזרתי לרשימה.');
+  });
+
+  document.body.appendChild(toast);
+
+  removedToastTimer = setTimeout(() => {
+    toast.remove();
+  }, 5200);
+}
+
+
 function showArrivalDialog(hadImage) {
-  if (!els.arrivalDialog) {
-    showToast('ברוכה הבאה הביתה 📦');
-    return;
-  }
-
-  if (els.arrivalDialogText) {
-    els.arrivalDialogText.textContent = hadImage
-      ? 'החבילה עברה להגיעו, והתמונה נמחקה כדי שהאפליקציה תישאר קלילה.'
-      : 'החבילה עברה לארכיון הניצחונות הקטנים.';
-  }
-
-  if (typeof els.arrivalDialog.showModal === 'function') {
-    els.arrivalDialog.showModal();
-  } else {
-    showToast('ברוכה הבאה הביתה 📦');
-  }
+  showToast('הגיע הביתה 📦');
 }
 
 function closeArrivalDialog() {
@@ -924,7 +928,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v26-smart-fun',
+      version: 'v27-one-screen',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
