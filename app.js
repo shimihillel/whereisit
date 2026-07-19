@@ -132,9 +132,9 @@ function bindEvents() {
 }
 
 function buildCategoryChips() {
-  els.categoryChips.innerHTML = categories.map((category, index) => `
+  els.categoryChips.innerHTML = categories.map(category => `
     <label class="category-chip-wrap">
-      <input type="radio" name="category" value="${category.id}" ${index === 0 ? 'checked' : ''} />
+      <input type="checkbox" name="category" value="${category.id}" />
       <span class="category-chip" style="background:${category.color};">${category.label}</span>
     </label>
   `).join('');
@@ -197,7 +197,15 @@ function onSubmitForm(event) {
 }
 
 function collectFormValues() {
-  const categoryInput = document.querySelector('input[name="category"]:checked');
+  const selectedCategories = Array.from(
+    document.querySelectorAll('input[name="category"]:checked')
+  ).map(input => input.value);
+
+  if (!selectedCategories.length) {
+    showToast('בחרי לפחות קטגוריה אחת.');
+    return null;
+  }
+
   const payload = {
     date: els.date.value,
     store: els.store.value.trim(),
@@ -206,7 +214,8 @@ function collectFormValues() {
     tracking: els.tracking.value.trim(),
     note: els.note.value.trim(),
     imageData: pendingImageData || '',
-    category: categoryInput ? categoryInput.value : 'other'
+    categories: selectedCategories,
+    category: selectedCategories[0]
   };
 
   if (!payload.store || !payload.item || !payload.date) {
@@ -336,7 +345,7 @@ function renderMonthlyFun(doneOrders) {
 
   const total = monthOrders.reduce((sum, order) => sum + Number(order.amount || 0), 0);
   const topStore = getTopValue(monthOrders, order => normalizeName(order.store));
-  const topCategoryId = getTopValue(monthOrders, order => order.category || 'other');
+  const topCategoryId = getTopValue(monthOrders, order => getOrderCategoryIds(order)[0] || 'other');
   const topCategory = topCategoryId ? getCategory(topCategoryId).label : '—';
 
   els.monthDoneCount.textContent = monthOrders.length;
@@ -457,7 +466,7 @@ function renderDoneList(list) {
 }
 
 function openCardTemplate(order) {
-  const category = getCategory(order.category);
+  const orderCategories = getOrderCategories(order);
   const trackingText = order.tracking ? `#${escapeHtml(order.tracking)}` : 'ללא מספר מעקב';
   const imageThumb = order.imageData
     ? `<div class="thumb"><img class="order-thumb" src="${order.imageData}" alt="" /></div>`
@@ -478,7 +487,7 @@ function openCardTemplate(order) {
           </div>
 
           <div class="meta">
-            <span class="pill" style="background:${category.color};">${category.label}</span>
+            ${renderCategoryPills(order)}
             <span class="divider"></span>
             <span>${formatDate(order.date)}</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -499,14 +508,14 @@ function openCardTemplate(order) {
 }
 
 function doneCardTemplate(order) {
-  const category = getCategory(order.category);
+  const orderCategories = getOrderCategories(order);
   const imageThumb = order.imageData
     ? `<img class="done-thumb" src="${order.imageData}" alt="" />`
     : `<div class="done-thumb thumb no-image">📦</div>`;
 
   return `
     <article class="done-card" data-open-details="${order.id}">
-      <span class="pill" style="background:${category.color};">${category.label}</span>
+      ${renderCategoryPills(order)}
       ${imageThumb}
       <h3 class="order-store">${escapeHtml(order.store)}</h3>
       <p class="order-item">${escapeHtml(order.item)}</p>
@@ -572,8 +581,10 @@ function editOrder(id) {
   pendingImageData = order.imageData || '';
   updateImagePreview(pendingImageData);
   els.photo.value = '';
-  const categoryInput = document.querySelector(`input[name="category"][value="${order.category || 'other'}"]`);
-  if (categoryInput) categoryInput.checked = true;
+  const selectedCategoryIds = getOrderCategoryIds(order);
+  document.querySelectorAll('input[name="category"]').forEach(input => {
+    input.checked = selectedCategoryIds.includes(input.value);
+  });
   els.formTitle.textContent = 'עריכת הזמנה';
   els.cancelEdit.hidden = false;
   closeDetails();
@@ -592,7 +603,7 @@ function deleteOrder(id) {
 function openDetails(id) {
   const order = orders.find(item => item.id === id);
   if (!order) return;
-  const category = getCategory(order.category);
+  const categoryLabels = getOrderCategories(order).map(category => category.label).join(' · ');
   const statusAction = order.status === 'open'
     ? `<button class="dialog-btn primary" type="button" data-action="arrive" data-id="${order.id}">הגיע</button>`
     : `<button class="dialog-btn" type="button" data-action="restore" data-id="${order.id}">החזירי לבדרך</button>`;
@@ -607,7 +618,7 @@ function openDetails(id) {
     <div class="details-grid">
       <div class="details-row"><strong>סכום</strong><span>${formatCurrency(order.amount)}</span></div>
       <div class="details-row"><strong>תאריך</strong><span>${formatDate(order.date)}</span></div>
-      <div class="details-row"><strong>קטגוריה</strong><span>${category.label}</span></div>
+      <div class="details-row"><strong>קטגוריות</strong><span>${categoryLabels}</span></div>
       <div class="details-row"><strong>מעקב</strong><span>${escapeHtml(order.tracking || '—')}</span></div>
     </div>
     ${order.note ? `<div class="details-note">${escapeHtml(order.note)}</div>` : ''}
@@ -636,8 +647,9 @@ function resetForm() {
   pendingImageData = '';
   updateImagePreview('');
   setTodayIfEmpty();
-  const firstCategory = document.querySelector('input[name="category"]');
-  if (firstCategory) firstCategory.checked = true;
+  document.querySelectorAll('input[name="category"]').forEach(input => {
+    input.checked = false;
+  });
 }
 
 function setTodayIfEmpty() {
@@ -650,8 +662,9 @@ function filterOrders(list, query) {
   const q = String(query || '').trim().toLowerCase();
   if (!q) return list;
   return list.filter(order => {
-    const categoryLabel = getCategory(order.category).label;
-    return [order.store, order.item, order.tracking, order.note, categoryLabel].some(value => String(value || '').toLowerCase().includes(q));
+    const categoryLabels = getOrderCategories(order).map(category => category.label).join(' ');
+    return [order.store, order.item, order.tracking, order.note, categoryLabels]
+      .some(value => String(value || '').toLowerCase().includes(q));
   });
 }
 
@@ -680,7 +693,7 @@ function sortDoneOrders(list) {
 
 function filterByCategory(list, categoryId) {
   if (!categoryId || categoryId === 'all') return list;
-  return list.filter(order => (order.category || 'other') === categoryId);
+  return list.filter(order => getOrderCategoryIds(order).includes(categoryId));
 }
 
 function sortOpenOrders(list) {
@@ -712,6 +725,26 @@ function sortByDateDesc(a, b) {
 
 function getCategory(id) {
   return categories.find(category => category.id === id) || categories[categories.length - 1];
+}
+
+
+function getOrderCategoryIds(order) {
+  const raw = Array.isArray(order.categories)
+    ? order.categories
+    : [order.category || 'other'];
+
+  const validIds = raw.filter(id => categories.some(category => category.id === id));
+  return [...new Set(validIds.length ? validIds : ['other'])];
+}
+
+function getOrderCategories(order) {
+  return getOrderCategoryIds(order).map(getCategory);
+}
+
+function renderCategoryPills(order) {
+  return getOrderCategories(order)
+    .map(category => `<span class="pill" style="background:${category.color};">${category.label}</span>`)
+    .join('');
 }
 
 
@@ -764,8 +797,9 @@ function buildOpenCategoryBreakdown(openOrders) {
 
   const totals = new Map();
   openOrders.forEach(order => {
-    const key = order.category || 'other';
-    totals.set(key, (totals.get(key) || 0) + Number(order.amount || 0));
+    getOrderCategoryIds(order).forEach(categoryId => {
+      totals.set(categoryId, (totals.get(categoryId) || 0) + Number(order.amount || 0));
+    });
   });
 
   const top = Array.from(totals.entries())
@@ -775,7 +809,7 @@ function buildOpenCategoryBreakdown(openOrders) {
 
   if (!top.length) return '';
 
-  return 'מתוכם ' + top
+  return 'לפי קטגוריות: ' + top
     .map(([categoryId, total]) => `${formatCurrency(total)} ${getCategory(categoryId).label}`)
     .join(' · ');
 }
@@ -928,7 +962,7 @@ function injectBackupUI() {
     }
     const backup = {
       app: 'איפה זה?!',
-      version: 'v27-one-screen',
+      version: 'v28-multi-categories',
       exportedAt: new Date().toISOString(),
       storageKey: STORAGE_KEY,
       localStorage: storage
